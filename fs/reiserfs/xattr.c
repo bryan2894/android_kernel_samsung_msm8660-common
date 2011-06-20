@@ -966,10 +966,10 @@ int reiserfs_permission(struct inode *inode, int mask, unsigned int flags)
 	 * Stat data v1 doesn't support ACLs.
 	 */
 	if (get_inode_sd_version(inode) != STAT_DATA_V1)
-		return generic_permission(inode, mask, flags,
+		return generic_permission(inode, mask,
 					reiserfs_check_acl);
 #endif
-	return generic_permission(inode, mask, flags, NULL);
+	return generic_permission(inode, mask, NULL);
 }
 
 static int xattr_hide_revalidate(struct dentry *dentry, struct nameidata *nd)

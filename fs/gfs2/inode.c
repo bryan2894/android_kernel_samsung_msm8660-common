@@ -1562,7 +1562,7 @@ int gfs2_permission(struct inode *inode, int mask, unsigned int flags)
 	if ((mask & MAY_WRITE) && IS_IMMUTABLE(inode))
 		error = -EACCES;
 	else
-		error = generic_permission(inode, mask, flags, gfs2_check_acl);
+		error = generic_permission(inode, mask, gfs2_check_acl);
 	if (unlock)
 		gfs2_glock_dq_uninit(&i_gh);
 
