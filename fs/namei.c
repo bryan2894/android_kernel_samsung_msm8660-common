@@ -176,8 +176,8 @@ EXPORT_SYMBOL(putname);
 /*
  * This does basic POSIX ACL permission checking
  */
-static int acl_permission_check(struct inode *inode, int mask, unsigned int flags,
-		int (*check_acl)(struct inode *inode, int mask, unsigned int flags))
+static int acl_permission_check(struct inode *inode, int mask,
+		int (*check_acl)(struct inode *inode, int mask))
 {
 	unsigned int mode = inode->i_mode;
 
@@ -190,7 +190,7 @@ static int acl_permission_check(struct inode *inode, int mask, unsigned int flag
 		mode >>= 6;
 	else {
 		if (IS_POSIXACL(inode) && (mode & S_IRWXG) && check_acl) {
-			int error = check_acl(inode, mask, flags);
+			int error = check_acl(inode, mask);
 			if (error != -EAGAIN)
 				return error;
 		}
@@ -225,14 +225,14 @@ other_perms:
  * It would then be called again in ref-walk mode.
  */
 int generic_permission(struct inode *inode, int mask, unsigned int flags,
-	int (*check_acl)(struct inode *inode, int mask, unsigned int flags))
+	int (*check_acl)(struct inode *inode, int mask))
 {
 	int ret;
 
 	/*
 	 * Do the basic POSIX ACL permission checks.
 	 */
-	ret = acl_permission_check(inode, mask, flags, check_acl);
+	ret = acl_permission_check(inode, mask, check_acl);
 	if (ret != -EACCES)
 		return ret;
 
@@ -588,7 +588,7 @@ static inline int exec_permission(struct inode *inode, unsigned int flags)
 	if (inode->i_op->permission) {
 		ret = inode->i_op->permission(inode, mask, flags);
 	} else {
-		ret = acl_permission_check(inode, mask, flags,
+		ret = acl_permission_check(inode, mask,
 				inode->i_op->check_acl);
 	}
 	if (likely(!ret))
