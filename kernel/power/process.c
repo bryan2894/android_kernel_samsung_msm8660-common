@@ -27,8 +27,7 @@ unsigned int __read_mostly freeze_timeout_msecs = 20 * MSEC_PER_SEC;
 static inline int freezable(struct task_struct * p)
 {
 	if ((p == current) ||
-	    (p->flags & PF_NOFREEZE) ||
-	    (p->exit_state != 0))
+	    (p->flags & PF_NOFREEZE))
 		return 0;
 	return 1;
 }
