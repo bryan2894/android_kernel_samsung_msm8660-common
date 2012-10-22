@@ -912,6 +912,12 @@ int usb_change_cdc_call_mgmt_num(
 	struct usb_descriptor_header **copy,
 	struct usb_cdc_call_mgmt_descriptor *match,
 	int num);
+
+struct usb_function;
+int usb_assign_descriptors(struct usb_function *f,
+	struct usb_descriptor_header **fs,
+	struct usb_descriptor_header **hs);
+void usb_free_all_descriptors(struct usb_function *f);
 #endif
 
 /**

@@ -248,36 +248,28 @@ eem_bind(struct usb_configuration *c, struct usb_function *f)
 
 	status = -ENOMEM;
 
-	/* copy descriptors, and track endpoint copies */
-	f->descriptors = usb_copy_descriptors(eem_fs_function);
-	if (!f->descriptors)
-		goto fail;
-
-	eem->fs.in = usb_find_endpoint(eem_fs_function,
-			f->descriptors, &eem_fs_in_desc);
-	eem->fs.out = usb_find_endpoint(eem_fs_function,
-			f->descriptors, &eem_fs_out_desc);
-
 	/* support all relevant hardware speeds... we expect that when
 	 * hardware is dual speed, all bulk-capable endpoints work at
 	 * both speeds
 	 */
-	if (gadget_is_dualspeed(c->cdev->gadget)) {
-		eem_hs_in_desc.bEndpointAddress =
-				eem_fs_in_desc.bEndpointAddress;
-		eem_hs_out_desc.bEndpointAddress =
-				eem_fs_out_desc.bEndpointAddress;
+	eem_hs_in_desc.bEndpointAddress =
+			eem_fs_in_desc.bEndpointAddress;
+	eem_hs_out_desc.bEndpointAddress =
+			eem_fs_out_desc.bEndpointAddress;
 
-		/* copy descriptors, and track endpoint copies */
-		f->hs_descriptors = usb_copy_descriptors(eem_hs_function);
-		if (!f->hs_descriptors)
-			goto fail;
+	status = usb_assign_descriptors(f, eem_fs_function, eem_hs_function);
+	if (status)
+		goto fail;
 
-		eem->hs.in = usb_find_endpoint(eem_hs_function,
-				f->hs_descriptors, &eem_hs_in_desc);
-		eem->hs.out = usb_find_endpoint(eem_hs_function,
-				f->hs_descriptors, &eem_hs_out_desc);
-	}
+	eem->fs.in = usb_find_endpoint(eem_fs_function,
+			f->fs_descriptors, &eem_fs_in_desc);
+	eem->fs.out = usb_find_endpoint(eem_fs_function,
+			f->fs_descriptors, &eem_fs_out_desc);
+
+	eem->hs.in = usb_find_endpoint(eem_hs_function,
+			f->hs_descriptors, &eem_hs_in_desc);
+	eem->hs.out = usb_find_endpoint(eem_hs_function,
+			f->hs_descriptors, &eem_hs_out_desc);
 
 	DBG(cdev, "CDC Ethernet (EEM): %s speed IN/%s OUT/%s\n",
 			gadget_is_dualspeed(c->cdev->gadget) ? "dual" : "full",
@@ -285,8 +277,7 @@ eem_bind(struct usb_configuration *c, struct usb_function *f)
 	return 0;
 
 fail:
-	if (f->descriptors)
-		usb_free_descriptors(f->descriptors);
+	usb_free_all_descriptors(f);
 
 	/* we might as well release our claims on endpoints */
 	if (eem->port.out)
@@ -306,9 +297,7 @@ eem_unbind(struct usb_configuration *c, struct usb_function *f)
 
 	DBG(c->cdev, "eem unbind\n");
 
-	if (gadget_is_dualspeed(c->cdev->gadget))
-		usb_free_descriptors(f->hs_descriptors);
-	usb_free_descriptors(f->descriptors);
+	usb_free_all_descriptors(f);
 	kfree(eem);
 }
 

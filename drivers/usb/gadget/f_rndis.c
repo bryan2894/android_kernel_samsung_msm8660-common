@@ -675,43 +675,31 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 	rndis->notify_req->context = rndis;
 	rndis->notify_req->complete = rndis_response_complete;
 
-	/* copy descriptors, and track endpoint copies */
-	f->descriptors = usb_copy_descriptors(eth_fs_function);
-	if (!f->descriptors)
-		goto fail;
-
-	rndis->fs.in = usb_find_endpoint(eth_fs_function,
-			f->descriptors, &fs_in_desc);
-	rndis->fs.out = usb_find_endpoint(eth_fs_function,
-			f->descriptors, &fs_out_desc);
-	rndis->fs.notify = usb_find_endpoint(eth_fs_function,
-			f->descriptors, &fs_notify_desc);
-
 	/* support all relevant hardware speeds... we expect that when
 	 * hardware is dual speed, all bulk-capable endpoints work at
 	 * both speeds
 	 */
-	if (gadget_is_dualspeed(c->cdev->gadget)) {
-		hs_in_desc.bEndpointAddress =
-				fs_in_desc.bEndpointAddress;
-		hs_out_desc.bEndpointAddress =
-				fs_out_desc.bEndpointAddress;
-		hs_notify_desc.bEndpointAddress =
-				fs_notify_desc.bEndpointAddress;
+	hs_in_desc.bEndpointAddress = fs_in_desc.bEndpointAddress;
+	hs_out_desc.bEndpointAddress = fs_out_desc.bEndpointAddress;
+	hs_notify_desc.bEndpointAddress = fs_notify_desc.bEndpointAddress;
 
-		/* copy descriptors, and track endpoint copies */
-		f->hs_descriptors = usb_copy_descriptors(eth_hs_function);
+	status = usb_assign_descriptors(f, eth_fs_function, eth_hs_function);
+	if (status)
+		goto fail;
 
-		if (!f->hs_descriptors)
-			goto fail;
+	rndis->fs.in = usb_find_endpoint(eth_fs_function,
+			f->fs_descriptors, &fs_in_desc);
+	rndis->fs.out = usb_find_endpoint(eth_fs_function,
+			f->fs_descriptors, &fs_out_desc);
+	rndis->fs.notify = usb_find_endpoint(eth_fs_function,
+			f->fs_descriptors, &fs_notify_desc);
 
-		rndis->hs.in = usb_find_endpoint(eth_hs_function,
-				f->hs_descriptors, &hs_in_desc);
-		rndis->hs.out = usb_find_endpoint(eth_hs_function,
-				f->hs_descriptors, &hs_out_desc);
-		rndis->hs.notify = usb_find_endpoint(eth_hs_function,
-				f->hs_descriptors, &hs_notify_desc);
-	}
+	rndis->hs.in = usb_find_endpoint(eth_hs_function,
+			f->hs_descriptors, &hs_in_desc);
+	rndis->hs.out = usb_find_endpoint(eth_hs_function,
+			f->hs_descriptors, &hs_out_desc);
+	rndis->hs.notify = usb_find_endpoint(eth_hs_function,
+			f->hs_descriptors, &hs_notify_desc);
 
 	rndis->port.open = rndis_open;
 	rndis->port.close = rndis_close;
@@ -740,10 +728,7 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 	return 0;
 
 fail:
-	if (gadget_is_dualspeed(c->cdev->gadget) && f->hs_descriptors)
-		usb_free_descriptors(f->hs_descriptors);
-	if (f->descriptors)
-		usb_free_descriptors(f->descriptors);
+	usb_free_all_descriptors(f);
 
 	if (rndis->notify_req) {
 		kfree(rndis->notify_req->buf);
@@ -771,9 +756,7 @@ rndis_unbind(struct usb_configuration *c, struct usb_function *f)
 	rndis_deregister(rndis->config);
 	rndis_exit();
 
-	if (gadget_is_dualspeed(c->cdev->gadget))
-		usb_free_descriptors(f->hs_descriptors);
-	usb_free_descriptors(f->descriptors);
+	usb_free_all_descriptors(f);
 
 	kfree(rndis->notify_req->buf);
 	usb_ep_free_request(rndis->notify, rndis->notify_req);

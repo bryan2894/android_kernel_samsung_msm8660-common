@@ -424,7 +424,7 @@ static void frmnet_unbind(struct usb_configuration *c, struct usb_function *f)
 
 	if (gadget_is_dualspeed(c->cdev->gadget))
 		usb_free_descriptors(f->hs_descriptors);
-	usb_free_descriptors(f->descriptors);
+	usb_free_descriptors(f->fs_descriptors);
 
 	frmnet_free_req(dev->notify, dev->notify_req);
 
@@ -838,19 +838,19 @@ static int frmnet_bind(struct usb_configuration *c, struct usb_function *f)
 	dev->notify_req->complete = frmnet_notify_complete;
 	dev->notify_req->context = dev;
 
-	f->descriptors = usb_copy_descriptors(rmnet_fs_function);
+	f->fs_descriptors = usb_copy_descriptors(rmnet_fs_function);
 
-	if (!f->descriptors)
+	if (!f->fs_descriptors)
 		goto fail;
 
 	dev->fs.in = usb_find_endpoint(rmnet_fs_function,
-					f->descriptors,
+					f->fs_descriptors,
 					&rmnet_fs_in_desc);
 	dev->fs.out = usb_find_endpoint(rmnet_fs_function,
-					f->descriptors,
+					f->fs_descriptors,
 					&rmnet_fs_out_desc);
 	dev->fs.notify = usb_find_endpoint(rmnet_fs_function,
-					f->descriptors,
+					f->fs_descriptors,
 					&rmnet_fs_notify_desc);
 
 	if (gadget_is_dualspeed(cdev->gadget)) {
@@ -883,8 +883,8 @@ static int frmnet_bind(struct usb_configuration *c, struct usb_function *f)
 	return 0;
 
 fail:
-	if (f->descriptors)
-		usb_free_descriptors(f->descriptors);
+	if (f->fs_descriptors)
+		usb_free_descriptors(f->fs_descriptors);
 ep_notify_alloc_fail:
 	dev->notify->driver_data = NULL;
 	dev->notify = NULL;

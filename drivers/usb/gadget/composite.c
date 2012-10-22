@@ -119,7 +119,7 @@ int usb_add_function(struct usb_configuration *config,
 	 * as full speed ... it's the function drivers that will need
 	 * to avoid bulk and ISO transfers.
 	 */
-	if (!config->fullspeed && function->descriptors)
+	if (!config->fullspeed && function->fs_descriptors)
 		config->fullspeed = true;
 	if (!config->highspeed && function->hs_descriptors)
 		config->highspeed = true;
@@ -281,7 +281,7 @@ static int config_buf(struct usb_configuration *config,
 		if (speed == USB_SPEED_HIGH)
 			descriptors = f->hs_descriptors;
 		else
-			descriptors = f->descriptors;
+			descriptors = f->fs_descriptors;
 		if (!descriptors)
 			continue;
 		status = usb_descriptor_fillbuf(next, len,
@@ -470,7 +470,7 @@ static int set_config(struct usb_composite_dev *cdev,
 		if (gadget->speed == USB_SPEED_HIGH)
 			descriptors = f->hs_descriptors;
 		else
-			descriptors = f->descriptors;
+			descriptors = f->fs_descriptors;
 
 		for (; *descriptors; ++descriptors) {
 			struct usb_endpoint_descriptor *ep;

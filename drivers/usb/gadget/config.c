@@ -27,6 +27,7 @@
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
+#include <linux/usb/composite.h>
 
 
 /**
@@ -294,6 +295,34 @@ int usb_change_cdc_call_mgmt_num(
 		return 1;
 	}
 	return 0;
+}
+
+int usb_assign_descriptors(struct usb_function *f,
+		struct usb_descriptor_header **fs,
+		struct usb_descriptor_header **hs)
+{
+	struct usb_gadget *g = f->config->cdev->gadget;
+
+	if (fs) {
+		f->fs_descriptors = usb_copy_descriptors(fs);
+		if (!f->fs_descriptors)
+			goto err;
+	}
+	if (hs && gadget_is_dualspeed(g)) {
+		f->hs_descriptors = usb_copy_descriptors(hs);
+		if (!f->hs_descriptors)
+			goto err;
+	}
+	return 0;
+err:
+	usb_free_all_descriptors(f);
+	return -ENOMEM;
+}
+
+void usb_free_all_descriptors(struct usb_function *f)
+{
+	usb_free_descriptors(f->fs_descriptors);
+	usb_free_descriptors(f->hs_descriptors);
 }
 #endif
 

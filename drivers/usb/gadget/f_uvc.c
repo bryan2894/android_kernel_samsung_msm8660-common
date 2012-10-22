@@ -479,8 +479,7 @@ uvc_function_unbind(struct usb_configuration *c, struct usb_function *f)
 		kfree(uvc->control_buf);
 	}
 
-	kfree(f->descriptors);
-	kfree(f->hs_descriptors);
+	usb_free_all_descriptors(f);
 
 	kfree(uvc);
 }
@@ -526,7 +525,7 @@ uvc_function_bind(struct usb_configuration *c, struct usb_function *f)
 	uvc->streaming_intf = ret;
 
 	/* Copy descriptors. */
-	f->descriptors = uvc_copy_descriptors(uvc, USB_SPEED_FULL);
+	f->fs_descriptors = uvc_copy_descriptors(uvc, USB_SPEED_FULL);
 	f->hs_descriptors = uvc_copy_descriptors(uvc, USB_SPEED_HIGH);
 
 	/* Preallocate control endpoint request. */

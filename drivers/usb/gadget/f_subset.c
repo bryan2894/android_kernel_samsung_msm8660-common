@@ -294,33 +294,26 @@ geth_bind(struct usb_configuration *c, struct usb_function *f)
 	geth->port.out_ep = ep;
 	ep->driver_data = cdev;	/* claim */
 
-	/* copy descriptors, and track endpoint copies */
-	f->descriptors = usb_copy_descriptors(fs_eth_function);
-
-	geth->fs.in = usb_find_endpoint(fs_eth_function,
-			f->descriptors, &fs_subset_in_desc);
-	geth->fs.out = usb_find_endpoint(fs_eth_function,
-			f->descriptors, &fs_subset_out_desc);
-
-
 	/* support all relevant hardware speeds... we expect that when
 	 * hardware is dual speed, all bulk-capable endpoints work at
 	 * both speeds
 	 */
-	if (gadget_is_dualspeed(c->cdev->gadget)) {
-		hs_subset_in_desc.bEndpointAddress =
-				fs_subset_in_desc.bEndpointAddress;
-		hs_subset_out_desc.bEndpointAddress =
-				fs_subset_out_desc.bEndpointAddress;
+	hs_subset_in_desc.bEndpointAddress = fs_subset_in_desc.bEndpointAddress;
+	hs_subset_out_desc.bEndpointAddress = fs_subset_out_desc.bEndpointAddress;
 
-		/* copy descriptors, and track endpoint copies */
-		f->hs_descriptors = usb_copy_descriptors(hs_eth_function);
+	status = usb_assign_descriptors(f, fs_eth_function, hs_eth_function);
+	if (status)
+		goto fail;
 
-		geth->hs.in = usb_find_endpoint(hs_eth_function,
-				f->hs_descriptors, &hs_subset_in_desc);
-		geth->hs.out = usb_find_endpoint(hs_eth_function,
-				f->hs_descriptors, &hs_subset_out_desc);
-	}
+	geth->fs.in = usb_find_endpoint(fs_eth_function,
+			f->fs_descriptors, &fs_subset_in_desc);
+	geth->fs.out = usb_find_endpoint(fs_eth_function,
+			f->fs_descriptors, &fs_subset_out_desc);
+
+	geth->hs.in = usb_find_endpoint(hs_eth_function,
+			f->hs_descriptors, &hs_subset_in_desc);
+	geth->hs.out = usb_find_endpoint(hs_eth_function,
+			f->hs_descriptors, &hs_subset_out_desc);
 
 	/* NOTE:  all that is done without knowing or caring about
 	 * the network link ... which is unavailable to this code
@@ -333,6 +326,7 @@ geth_bind(struct usb_configuration *c, struct usb_function *f)
 	return 0;
 
 fail:
+	usb_free_all_descriptors(f);
 	/* we might as well release our claims on endpoints */
 	if (geth->port.out)
 		geth->port.out_ep->driver_data = NULL;
@@ -347,9 +341,7 @@ fail:
 static void
 geth_unbind(struct usb_configuration *c, struct usb_function *f)
 {
-	if (gadget_is_dualspeed(c->cdev->gadget))
-		usb_free_descriptors(f->hs_descriptors);
-	usb_free_descriptors(f->descriptors);
+	usb_free_all_descriptors(f);
 	geth_string_defs[1].s = NULL;
 	kfree(func_to_geth(f));
 }

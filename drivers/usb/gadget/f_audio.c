@@ -691,7 +691,7 @@ f_audio_bind(struct usb_configuration *c, struct usb_function *f)
 		c->highspeed = true;
 		f->hs_descriptors = usb_copy_descriptors(f_audio_desc);
 	} else
-		f->descriptors = usb_copy_descriptors(f_audio_desc);
+		f->fs_descriptors = usb_copy_descriptors(f_audio_desc);
 
 	return 0;
 
@@ -705,8 +705,7 @@ f_audio_unbind(struct usb_configuration *c, struct usb_function *f)
 {
 	struct f_audio		*audio = func_to_audio(f);
 
-	usb_free_descriptors(f->descriptors);
-	usb_free_descriptors(f->hs_descriptors);
+	usb_free_all_descriptors(f);
 	kfree(audio);
 }
 

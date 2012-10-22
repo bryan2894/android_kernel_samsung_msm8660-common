@@ -750,42 +750,32 @@ acm_bind(struct usb_configuration *c, struct usb_function *f)
 	acm->notify_req->complete = acm_cdc_notify_complete;
 	acm->notify_req->context = acm;
 
-	/* copy descriptors, and track endpoint copies */
-	f->descriptors = usb_copy_descriptors(acm_fs_function);
-	if (!f->descriptors)
-		goto fail;
-
-	acm->fs.in = usb_find_endpoint(acm_fs_function,
-			f->descriptors, &acm_fs_in_desc);
-	acm->fs.out = usb_find_endpoint(acm_fs_function,
-			f->descriptors, &acm_fs_out_desc);
-	acm->fs.notify = usb_find_endpoint(acm_fs_function,
-			f->descriptors, &acm_fs_notify_desc);
-
 	/* support all relevant hardware speeds... we expect that when
 	 * hardware is dual speed, all bulk-capable endpoints work at
 	 * both speeds
 	 */
-	if (gadget_is_dualspeed(c->cdev->gadget)) {
-		acm_hs_in_desc.bEndpointAddress =
-				acm_fs_in_desc.bEndpointAddress;
-		acm_hs_out_desc.bEndpointAddress =
-				acm_fs_out_desc.bEndpointAddress;
-		acm_hs_notify_desc.bEndpointAddress =
-				acm_fs_notify_desc.bEndpointAddress;
+	acm_hs_in_desc.bEndpointAddress = acm_fs_in_desc.bEndpointAddress;
+	acm_hs_out_desc.bEndpointAddress = acm_fs_out_desc.bEndpointAddress;
+	acm_hs_notify_desc.bEndpointAddress =
+			acm_fs_notify_desc.bEndpointAddress;
 
-		/* copy descriptors, and track endpoint copies */
-		f->hs_descriptors = usb_copy_descriptors(acm_hs_function);
-		if (!f->hs_descriptors)
-			goto fail;
+	status = usb_assign_descriptors(f, acm_fs_function, acm_hs_function);
+	if (status)
+		goto fail;
 
-		acm->hs.in = usb_find_endpoint(acm_hs_function,
-				f->hs_descriptors, &acm_hs_in_desc);
-		acm->hs.out = usb_find_endpoint(acm_hs_function,
-				f->hs_descriptors, &acm_hs_out_desc);
-		acm->hs.notify = usb_find_endpoint(acm_hs_function,
-				f->hs_descriptors, &acm_hs_notify_desc);
-	}
+	acm->fs.in = usb_find_endpoint(acm_fs_function,
+			f->fs_descriptors, &acm_fs_in_desc);
+	acm->fs.out = usb_find_endpoint(acm_fs_function,
+			f->fs_descriptors, &acm_fs_out_desc);
+	acm->fs.notify = usb_find_endpoint(acm_fs_function,
+			f->fs_descriptors, &acm_fs_notify_desc);
+
+	acm->hs.in = usb_find_endpoint(acm_hs_function,
+			f->hs_descriptors, &acm_hs_in_desc);
+	acm->hs.out = usb_find_endpoint(acm_hs_function,
+			f->hs_descriptors, &acm_hs_out_desc);
+	acm->hs.notify = usb_find_endpoint(acm_hs_function,
+			f->hs_descriptors, &acm_hs_notify_desc);
 
 	DBG(cdev, "acm ttyGS%d: %s speed IN/%s OUT/%s NOTIFY/%s\n",
 			acm->port_num,
@@ -799,10 +789,7 @@ acm_bind(struct usb_configuration *c, struct usb_function *f)
 	return 0;
 
 fail:
-	if (f->hs_descriptors)
-		usb_free_descriptors(f->hs_descriptors);
-	if (f->descriptors)
-		usb_free_descriptors(f->descriptors);
+	usb_free_all_descriptors(f);
 
 	if (acm->notify_req)
 		gs_free_req(acm->notify, acm->notify_req);
@@ -825,9 +812,7 @@ acm_unbind(struct usb_configuration *c, struct usb_function *f)
 {
 	struct f_acm		*acm = func_to_acm(f);
 
-	if (gadget_is_dualspeed(c->cdev->gadget))
-		usb_free_descriptors(f->hs_descriptors);
-	usb_free_descriptors(f->descriptors);
+	usb_free_all_descriptors(f);
 	gs_free_req(acm->notify, acm->notify_req);
 #ifdef CONFIG_USB_DUN_SUPPORT
 	if (acm->port_num ==1)
@@ -885,27 +870,27 @@ static int acm_set_interface_id(struct usb_function *f,
 	} else {
 		if (index_num == 0) {
 			if (usb_change_interface_num(acm_fs_function,
-				f->descriptors, &acm_control_interface_desc,
+				f->fs_descriptors, &acm_control_interface_desc,
 				intf_num)) {
 				acm->ctrl_id = intf_num;
 			}
 			usb_change_cdc_union_num(acm_fs_function,
-				f->descriptors, &acm_union_desc,
+				f->fs_descriptors, &acm_union_desc,
 				intf_num, 1);
-			usb_change_iad_num(acm_fs_function, f->descriptors,
+			usb_change_iad_num(acm_fs_function, f->fs_descriptors,
 			    &acm_iad_descriptor, intf_num);
 			ret = 1;
 		} else if (index_num == 1) {
 			if (usb_change_interface_num(acm_fs_function,
-				f->descriptors, &acm_data_interface_desc,
+				f->fs_descriptors, &acm_data_interface_desc,
 				intf_num)) {
 				acm->data_id = intf_num;
 			}
 			usb_change_cdc_union_num(acm_fs_function,
-				f->descriptors, &acm_union_desc,
+				f->fs_descriptors, &acm_union_desc,
 				intf_num, 0);
 			usb_change_cdc_call_mgmt_num(acm_fs_function,
-				f->descriptors, &acm_call_mgmt_descriptor,
+				f->fs_descriptors, &acm_call_mgmt_descriptor,
 				intf_num);
 			ret = 1;
 		} else {

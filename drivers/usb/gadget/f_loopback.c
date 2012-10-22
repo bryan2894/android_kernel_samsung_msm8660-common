@@ -143,6 +143,7 @@ loopback_bind(struct usb_configuration *c, struct usb_function *f)
 	struct usb_composite_dev *cdev = c->cdev;
 	struct f_loopback	*loop = func_to_loop(f);
 	int			id;
+	int			ret;
 
 	/* allocate interface ID(s) */
 	id = usb_interface_id(c, f);
@@ -167,13 +168,14 @@ autoconf_fail:
 	loop->out_ep->driver_data = cdev;	/* claim */
 
 	/* support high speed hardware */
-	if (gadget_is_dualspeed(c->cdev->gadget)) {
-		hs_loop_source_desc.bEndpointAddress =
-				fs_loop_source_desc.bEndpointAddress;
-		hs_loop_sink_desc.bEndpointAddress =
-				fs_loop_sink_desc.bEndpointAddress;
-		f->hs_descriptors = hs_loopback_descs;
-	}
+	hs_loop_source_desc.bEndpointAddress =
+			fs_loop_source_desc.bEndpointAddress;
+	hs_loop_sink_desc.bEndpointAddress =
+			fs_loop_sink_desc.bEndpointAddress;
+
+	ret = usb_assign_descriptors(f, fs_loopback_descs, hs_loopback_descs);
+	if (ret)
+		return ret;
 
 	DBG(cdev, "%s speed %s: IN/%s, OUT/%s\n",
 			gadget_is_dualspeed(c->cdev->gadget) ? "dual" : "full",
@@ -184,6 +186,7 @@ autoconf_fail:
 static void
 loopback_unbind(struct usb_configuration *c, struct usb_function *f)
 {
+	usb_free_all_descriptors(f);
 	kfree(func_to_loop(f));
 }
 
@@ -334,7 +337,6 @@ static int __init loopback_bind_config(struct usb_configuration *c)
 		return -ENOMEM;
 
 	loop->function.name = "loopback";
-	loop->function.descriptors = fs_loopback_descs;
 	loop->function.bind = loopback_bind;
 	loop->function.unbind = loopback_unbind;
 	loop->function.set_alt = loopback_set_alt;

@@ -156,6 +156,7 @@ sourcesink_bind(struct usb_configuration *c, struct usb_function *f)
 	struct usb_composite_dev *cdev = c->cdev;
 	struct f_sourcesink	*ss = func_to_ss(f);
 	int	id;
+	int ret;
 
 	/* allocate interface ID(s) */
 	id = usb_interface_id(c, f);
@@ -179,13 +180,14 @@ autoconf_fail:
 	ss->out_ep->driver_data = cdev;	/* claim */
 
 	/* support high speed hardware */
-	if (gadget_is_dualspeed(c->cdev->gadget)) {
-		hs_source_desc.bEndpointAddress =
-				fs_source_desc.bEndpointAddress;
-		hs_sink_desc.bEndpointAddress =
-				fs_sink_desc.bEndpointAddress;
-		f->hs_descriptors = hs_source_sink_descs;
-	}
+	hs_source_desc.bEndpointAddress = fs_source_desc.bEndpointAddress;
+	hs_sink_desc.bEndpointAddress = fs_sink_desc.bEndpointAddress;
+	f->hs_descriptors = hs_source_sink_descs;
+
+	ret = usb_assign_descriptors(f, fs_source_sink_descs,
+			hs_source_sink_descs);
+	if (ret)
+		return ret;
 
 	DBG(cdev, "%s speed %s: IN/%s, OUT/%s\n",
 			gadget_is_dualspeed(c->cdev->gadget) ? "dual" : "full",
@@ -196,6 +198,7 @@ autoconf_fail:
 static void
 sourcesink_unbind(struct usb_configuration *c, struct usb_function *f)
 {
+	usb_free_all_descriptors(f);
 	kfree(func_to_ss(f));
 }
 
@@ -414,7 +417,6 @@ static int __init sourcesink_bind_config(struct usb_configuration *c)
 		return -ENOMEM;
 
 	ss->function.name = "source/sink";
-	ss->function.descriptors = fs_source_sink_descs;
 	ss->function.bind = sourcesink_bind;
 	ss->function.unbind = sourcesink_unbind;
 	ss->function.set_alt = sourcesink_set_alt;
