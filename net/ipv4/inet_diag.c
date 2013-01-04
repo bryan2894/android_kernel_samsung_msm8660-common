@@ -997,7 +997,7 @@ static int inet_diag_rcv_msg_compat(struct sk_buff *skb, struct nlmsghdr *nlh)
 		}
 
 		return netlink_dump_start(sock_diag_nlsk, skb, nlh,
-					  inet_diag_dump_compat, NULL);
+					  inet_diag_dump_compat, NULL, 0);
 	}
 
 	return inet_diag_get_exact_compat(skb, nlh);
@@ -1023,7 +1023,7 @@ static int inet_diag_handler_cmd(struct sk_buff *skb, struct nlmsghdr *h)
 		}
 
 		return netlink_dump_start(sock_diag_nlsk, skb, h,
-					  inet_diag_dump, NULL);
+					  inet_diag_dump, NULL, 0);
 	}
 
 	return inet_diag_cmd_exact(h->nlmsg_type, skb, h,
