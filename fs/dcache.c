@@ -103,7 +103,7 @@ static unsigned int d_hash_shift __read_mostly;
 
 static struct hlist_bl_head *dentry_hashtable __read_mostly;
 
-static inline struct hlist_bl_head *d_hash(struct dentry *parent,
+static inline struct hlist_bl_head *d_hash(const struct dentry *parent,
 					unsigned long hash)
 {
 	hash += ((unsigned long) parent ^ GOLDEN_RATIO_PRIME) / L1_CACHE_BYTES;
@@ -1811,7 +1811,7 @@ EXPORT_SYMBOL(d_add_ci);
  * child is looked up. Thus, an interlocking stepping of sequence lock checks
  * is formed, giving integrity down the path walk.
  */
-struct dentry *__d_lookup_rcu(struct dentry *parent, struct qstr *name,
+struct dentry *__d_lookup_rcu(const struct dentry *parent, const struct qstr *name,
 				unsigned *seq, struct inode **inode)
 {
 	unsigned int len = name->len;
@@ -1929,7 +1929,7 @@ EXPORT_SYMBOL(d_lookup);
  *
  * __d_lookup callers must be commented.
  */
-struct dentry *__d_lookup(struct dentry *parent, struct qstr *name)
+struct dentry *__d_lookup(const struct dentry *parent, const struct qstr *name)
 {
 	unsigned int len = name->len;
 	unsigned int hash = name->hash;
