@@ -1359,6 +1359,14 @@ config MSM_DALRPC_TEST
 	help
 	  Exercises DAL RPC calls to QDSP6.
 
+config KGSL_GPU_CTRL
+	bool "MSM KGSL GPU frequency control by CvD"
+	default y
+	help
+	  Allow for GPU overclock frequencies and sysfs
+	  interface for managing max GPU speed. 3D max 
+	  clock 320MHz, 2D max clock 266MHz.
+
 if CPU_FREQ_MSM
 
 config MSM_CPU_FREQ_SET_MIN_MAX
