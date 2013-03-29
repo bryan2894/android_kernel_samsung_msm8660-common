@@ -57,6 +57,24 @@ struct cpu_load_data {
        struct mutex cpu_load_mutex;
 };
 
+#ifdef CONFIG_MSM_MPDEC
+unsigned int get_rq_info(void)
+{
+	unsigned long flags = 0;
+	unsigned int rq = 0;
+
+	spin_lock_irqsave(&rq_lock, flags);
+
+	rq = rq_info.rq_avg;
+	rq_info.rq_avg = 0;
+
+	spin_unlock_irqrestore(&rq_lock, flags);
+
+	return rq;
+}
+EXPORT_SYMBOL(get_rq_info);
+#endif
+
 static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
 
 static inline u64 get_cpu_idle_time_jiffy(unsigned int cpu, u64 *wall)

@@ -1368,6 +1368,13 @@ config MSM_CPU_FREQ_SET_MIN_MAX
 	  Allow setting min and max CPU frequencies. Sysfs can be used
 	  to override these values.
 
+config MSM_MPDEC
+	bool "Use MSM MPDecision"
+	default y
+	help
+	  Allow auto hotplugging of CPU cores on multi
+	  core chipsets.
+
 config MSM_CPU_FREQ_MAX
 	int "Max CPU Frequency"
 	depends on MSM_CPU_FREQ_SET_MIN_MAX
