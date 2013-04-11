@@ -38,10 +38,10 @@
 #define DEBUG 0
 
 #define MPDEC_TAG                       "[MPDEC]: "
-#define MSM_MPDEC_STARTDELAY            20000
+#define MSM_MPDEC_STARTDELAY            15000
 #define MSM_MPDEC_DELAY                 70
-#define MSM_MPDEC_PAUSE                 10000
-#define MSM_MPDEC_IDLE_FREQ             486000
+#define MSM_MPDEC_PAUSE                 5000
+#define MSM_MPDEC_IDLE_FREQ             384000
 
 enum {
 	MSM_MPDEC_DISABLED = 0,
@@ -80,8 +80,8 @@ static struct msm_mpdec_tuners {
         .min_cpus = 1,
 };
 
-static unsigned int NwNs_Threshold[8] = {12, 0, 25, 20, 32, 28, 0, 35};
-static unsigned int TwTs_Threshold[8] = {140, 0, 140, 190, 140, 190, 0, 190};
+static unsigned int NwNs_Threshold[8] = {12, 0, 25, 20};
+static unsigned int TwTs_Threshold[8] = {140, 0, 140, 190};
 
 extern unsigned int get_rq_info(void);
 extern unsigned long acpuclk_get_rate(int);
@@ -196,8 +196,8 @@ static int mp_decision(void)
 
 	last_time = ktime_to_ms(ktime_get());
 #if DEBUG
-        pr_info(MPDEC_TAG"[DEBUG] rq: %u, new_state: %i | Mask=[%d%d%d%d]\n",
-                rq_depth, new_state, cpu_online(0), cpu_online(1), cpu_online(2), cpu_online(3));
+        pr_info(MPDEC_TAG"[DEBUG] rq: %u, new_state: %i | Mask=[%d%d]\n",
+                rq_depth, new_state, cpu_online(0), cpu_online(1));
 #endif
 	return new_state;
 }
@@ -246,8 +246,8 @@ static void msm_mpdec_work_thread(struct work_struct *work)
 				cpu_down(cpu);
 				per_cpu(msm_mpdec_cpudata, cpu).online = false;
 				on_time = ktime_to_ms(ktime_get()) - per_cpu(msm_mpdec_cpudata, cpu).on_time;
-				pr_info(MPDEC_TAG"CPU[%d] on->off | Mask=[%d%d%d%d] | time online: %llu\n",
-						cpu, cpu_online(0), cpu_online(1), cpu_online(2), cpu_online(3), on_time);
+				pr_info(MPDEC_TAG"CPU[%d] on->off | Mask=[%d%d] | time online: %llu\n",
+						cpu, cpu_online(0), cpu_online(1), on_time);
 			} else if (per_cpu(msm_mpdec_cpudata, cpu).online != cpu_online(cpu)) {
 				pr_info(MPDEC_TAG"CPU[%d] was controlled outside of mpdecision! | pausing [%d]ms\n",
 						cpu, msm_mpdec_tuners_ins.pause);
@@ -263,8 +263,8 @@ static void msm_mpdec_work_thread(struct work_struct *work)
 				cpu_up(cpu);
 				per_cpu(msm_mpdec_cpudata, cpu).online = true;
 				per_cpu(msm_mpdec_cpudata, cpu).on_time = ktime_to_ms(ktime_get());
-				pr_info(MPDEC_TAG"CPU[%d] off->on | Mask=[%d%d%d%d]\n",
-						cpu, cpu_online(0), cpu_online(1), cpu_online(2), cpu_online(3));
+				pr_info(MPDEC_TAG"CPU[%d] off->on | Mask=[%d%d]\n",
+						cpu, cpu_online(0), cpu_online(1));
 			} else if (per_cpu(msm_mpdec_cpudata, cpu).online != cpu_online(cpu)) {
 				pr_info(MPDEC_TAG"CPU[%d] was controlled outside of mpdecision! | pausing [%d]ms\n",
 						cpu, msm_mpdec_tuners_ins.pause);
@@ -293,8 +293,8 @@ static void msm_mpdec_early_suspend(struct early_suspend *h)
 		mutex_lock(&per_cpu(msm_mpdec_cpudata, cpu).suspend_mutex);
 		if ((cpu >= 1) && (cpu_online(cpu))) {
                         cpu_down(cpu);
-                        pr_info(MPDEC_TAG"Screen -> off. Suspended CPU[%d] | Mask=[%d%d%d%d]\n",
-                                cpu, cpu_online(0), cpu_online(1), cpu_online(2), cpu_online(3));
+                        pr_info(MPDEC_TAG"Screen -> off. Suspended CPU[%d] | Mask=[%d%d]\n",
+                                cpu, cpu_online(0), cpu_online(1));
 			per_cpu(msm_mpdec_cpudata, cpu).online = false;
 		}
 		per_cpu(msm_mpdec_cpudata, cpu).device_suspended = true;
@@ -319,8 +319,8 @@ static void msm_mpdec_late_resume(struct early_suspend *h)
 		cpu_up(1);
 		per_cpu(msm_mpdec_cpudata, 1).on_time = ktime_to_ms(ktime_get());
 		per_cpu(msm_mpdec_cpudata, 1).online = true;
-		pr_info(MPDEC_TAG"Screen -> on. Hot plugged CPU1 | Mask=[%d%d%d%d]\n",
-                        cpu_online(0), cpu_online(1), cpu_online(2), cpu_online(3));
+		pr_info(MPDEC_TAG"Screen -> on. Hot plugged CPU1 | Mask=[%d%d]\n",
+                        cpu_online(0), cpu_online(1));
 	}
 	mutex_unlock(&per_cpu(msm_mpdec_cpudata, 1).suspend_mutex);
 
@@ -328,8 +328,8 @@ static void msm_mpdec_late_resume(struct early_suspend *h)
         was_paused = true;
         queue_delayed_work(msm_mpdec_workq, &msm_mpdec_work, 0);
 
-        pr_info(MPDEC_TAG"Screen -> on. Activated mpdecision. | Mask=[%d%d%d%d]\n",
-		cpu_online(0), cpu_online(1), cpu_online(2), cpu_online(3));
+        pr_info(MPDEC_TAG"Screen -> on. Activated mpdecision. | Mask=[%d%d]\n",
+		cpu_online(0), cpu_online(1));
 }
 
 static struct early_suspend msm_mpdec_early_suspend_handler = {
@@ -361,14 +361,8 @@ static ssize_t show_##file_name                                         \
 {                                                                       \
 	return sprintf(buf, "%u\n", TwTs_Threshold[arraypos]);          \
 }
-show_one_twts(twts_threshold_0, 0);
-show_one_twts(twts_threshold_1, 1);
-show_one_twts(twts_threshold_2, 2);
-show_one_twts(twts_threshold_3, 3);
-show_one_twts(twts_threshold_4, 4);
-show_one_twts(twts_threshold_5, 5);
-show_one_twts(twts_threshold_6, 6);
-show_one_twts(twts_threshold_7, 7);
+show_one_twts(twts_threshold_up, 0);
+show_one_twts(twts_threshold_down, 3);
 
 #define store_one_twts(file_name, arraypos)                             \
 static ssize_t store_##file_name                                        \
@@ -383,14 +377,8 @@ static ssize_t store_##file_name                                        \
 	return count;                                                   \
 }                                                                       \
 define_one_global_rw(file_name);
-store_one_twts(twts_threshold_0, 0);
-store_one_twts(twts_threshold_1, 1);
-store_one_twts(twts_threshold_2, 2);
-store_one_twts(twts_threshold_3, 3);
-store_one_twts(twts_threshold_4, 4);
-store_one_twts(twts_threshold_5, 5);
-store_one_twts(twts_threshold_6, 6);
-store_one_twts(twts_threshold_7, 7);
+store_one_twts(twts_threshold_up, 0);
+store_one_twts(twts_threshold_down, 3);
 
 #define show_one_nwns(file_name, arraypos)                              \
 static ssize_t show_##file_name                                         \
@@ -398,14 +386,8 @@ static ssize_t show_##file_name                                         \
 {                                                                       \
 	return sprintf(buf, "%u\n", NwNs_Threshold[arraypos]);          \
 }
-show_one_nwns(nwns_threshold_0, 0);
-show_one_nwns(nwns_threshold_1, 1);
-show_one_nwns(nwns_threshold_2, 2);
-show_one_nwns(nwns_threshold_3, 3);
-show_one_nwns(nwns_threshold_4, 4);
-show_one_nwns(nwns_threshold_5, 5);
-show_one_nwns(nwns_threshold_6, 6);
-show_one_nwns(nwns_threshold_7, 7);
+show_one_nwns(nwns_threshold_up, 0);
+show_one_nwns(nwns_threshold_down, 3);
 
 #define store_one_nwns(file_name, arraypos)                             \
 static ssize_t store_##file_name                                        \
@@ -420,14 +402,8 @@ static ssize_t store_##file_name                                        \
 	return count;                                                   \
 }                                                                       \
 define_one_global_rw(file_name);
-store_one_nwns(nwns_threshold_0, 0);
-store_one_nwns(nwns_threshold_1, 1);
-store_one_nwns(nwns_threshold_2, 2);
-store_one_nwns(nwns_threshold_3, 3);
-store_one_nwns(nwns_threshold_4, 4);
-store_one_nwns(nwns_threshold_5, 5);
-store_one_nwns(nwns_threshold_6, 6);
-store_one_nwns(nwns_threshold_7, 7);
+store_one_nwns(nwns_threshold_up, 0);
+store_one_nwns(nwns_threshold_down, 3);
 
 static ssize_t show_idle_freq (struct kobject *kobj, struct attribute *attr,
                                    char *buf)
@@ -630,22 +606,10 @@ static struct attribute *msm_mpdec_attributes[] = {
         &min_cpus.attr,
         &max_cpus.attr,
 	&enabled.attr,
-	&twts_threshold_0.attr,
-	&twts_threshold_1.attr,
-	&twts_threshold_2.attr,
-	&twts_threshold_3.attr,
-	&twts_threshold_4.attr,
-	&twts_threshold_5.attr,
-	&twts_threshold_6.attr,
-	&twts_threshold_7.attr,
-	&nwns_threshold_0.attr,
-	&nwns_threshold_1.attr,
-	&nwns_threshold_2.attr,
-	&nwns_threshold_3.attr,
-	&nwns_threshold_4.attr,
-	&nwns_threshold_5.attr,
-	&nwns_threshold_6.attr,
-	&nwns_threshold_7.attr,
+	&twts_threshold_up.attr,
+	&twts_threshold_down.attr,
+	&nwns_threshold_up.attr,
+	&nwns_threshold_down.attr,
 	NULL
 };
 
