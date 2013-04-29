@@ -383,8 +383,13 @@ static int __cpuinit msm_cpufreq_init(struct cpufreq_policy *policy)
 	    CPUFREQ_RELATION_H, &index) &&
 	    cpufreq_frequency_table_target(policy, table, cur_freq,
 	    CPUFREQ_RELATION_L, &index)) {
+#ifdef CONFIG_MSM_CPU_FREQ_SET_MIN_MAX
+		pr_info("cpufreq: cpu%d at invalid freq: %d - init # %d\n",
+				policy->cpu, cur_freq, cpuinitcount);
+#else
 		pr_info("cpufreq: cpu%d at invalid freq: %d\n",
 				policy->cpu, cur_freq);
+#endif
 		return -EINVAL;
 	}
 
@@ -394,8 +399,13 @@ static int __cpuinit msm_cpufreq_init(struct cpufreq_policy *policy)
 				SETRATE_CPUFREQ);
 		if (ret)
 			return ret;
+#ifdef CONFIG_MSM_CPU_FREQ_SET_MIN_MAX
+		pr_info("cpufreq: cpu%d init at %d switching to %d - init # %d\n",
+				policy->cpu, cur_freq, table[index].frequency, cpuinitcount);
+#else
 		pr_info("cpufreq: cpu%d init at %d switching to %d\n",
 				policy->cpu, cur_freq, table[index].frequency);
+#endif
 		cur_freq = table[index].frequency;
 	}
 
