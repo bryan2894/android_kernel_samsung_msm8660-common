@@ -254,6 +254,7 @@ obj-$(CONFIG_ARCH_MSM8960) += acpuclock-8960.o
 obj-$(CONFIG_ARCH_MSM8960) += memory_topology.o
 obj-$(CONFIG_ARCH_MSM8960) += saw-regulator.o
 obj-$(CONFIG_ARCH_MSM8960) += devices-8960.o
+obj-$(CONFIG_FORCE_FAST_CHARGE) += fastchg.o 
 obj-$(CONFIG_ARCH_APQ8064) += devices-8960.o devices-8064.o
 obj-$(CONFIG_MSM_MPDEC) += msm_mpdecision.o
 obj-$(CONFIG_KGSL_GPU_CTRL) += gpu_freq.o
