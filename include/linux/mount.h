@@ -46,8 +46,12 @@ struct mnt_namespace;
 				 | MNT_NOATIME | MNT_NODIRATIME | MNT_RELATIME \
 				 | MNT_READONLY)
 
+#define MNT_INTERNAL_FLAGS (MNT_SHARED | MNT_WRITE_HOLD | MNT_INTERNAL | \
+			    MNT_MARKED)
 
 #define MNT_INTERNAL	0x4000
+
+#define MNT_MARKED		0x4000000
 
 struct mnt_pcp {
 	int mnt_count;
