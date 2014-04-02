@@ -25,6 +25,10 @@
 #include "kgsl_trace.h"
 #include "kgsl_sharedmem.h"
 
+#ifdef CONFIG_KGSL_GPU_CTRL
+#include <linux/gpu_freq.h>
+#endif
+
 #define KGSL_PWRFLAGS_POWER_ON 0
 #define KGSL_PWRFLAGS_CLK_ON   1
 #define KGSL_PWRFLAGS_AXI_ON   2
@@ -112,8 +116,16 @@ void kgsl_pwrctrl_pwrlevel_change(struct kgsl_device *device,
 	int delta;
 	int level;
 
+#ifdef CONFIG_KGSL_GPU_CTRL
+	int diff = 0;
+#endif
+
 	/* Adjust the power level to the current constraints */
 	new_level = _adjust_pwrlevel(pwr, new_level);
+
+#ifdef CONFIG_KGSL_GPU_CTRL
+	diff = new_level - pwr->active_pwrlevel;
+#endif
 
 	if (new_level == pwr->active_pwrlevel)
 		return;
@@ -123,14 +135,6 @@ void kgsl_pwrctrl_pwrlevel_change(struct kgsl_device *device,
 	update_clk_statistics(device, true);
 
 	level = pwr->active_pwrlevel;
-
-	/*
-	 * Set the active powerlevel first in case the clocks are off - if we
-	 * don't do this then the pwrlevel change won't take effect when the
-	 * clocks come back
-	 */
-
-	pwr->active_pwrlevel = new_level;
 
 	if (test_bit(KGSL_PWRFLAGS_CLK_ON, &pwr->power_flags) ||
 		(device->state == KGSL_STATE_NAP)) {
@@ -150,10 +154,23 @@ void kgsl_pwrctrl_pwrlevel_change(struct kgsl_device *device,
 		 */
 
 		while (level != new_level) {
-			level += delta;
+	        	/*
+       	 	 	 * Set the active powerlevel first in case the clocks are off - if we
+         	 	 * don't do this then the pwrlevel change won't take effect when the
+         	 	 * clocks come back
+          	 	 */
 
+			level += delta;
+			pwr->active_pwrlevel = level;
+			
 			clk_set_rate(pwr->grp_clks[0],
-				pwr->pwrlevels[level].gpu_freq);
+                                pwr->pwrlevels[level].gpu_freq);
+		
+#ifdef CONFIG_KGSL_GPU_CTRL
+			if(diff < 1 && level  == gpu_3d_freq_phase)
+					break;
+#endif
+
 		}
 	}
 
