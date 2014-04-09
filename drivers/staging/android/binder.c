@@ -1926,17 +1926,18 @@ static int binder_thread_write(struct binder_proc *proc,
 				binder_dec_ref(&ref, 0);
 				break;
 			}
-			if (ref == NULL) {
-				binder_debug(BINDER_DEBUG_USER_REFS,
-					"%d:%d %s ref deleted",
-					proc->pid, thread->pid, debug_string);
-			} else {
-				binder_debug(BINDER_DEBUG_USER_REFS,
-					"%d:%d %s ref %d desc %d s %d w %d for node %d\n",
-					proc->pid, thread->pid, debug_string, ref->debug_id,
-					ref->desc, ref->strong, ref->weak, ref->node->debug_id);
-			}
-			break;
+		  if (ref == NULL) {
+			binder_debug(BINDER_DEBUG_USER_REFS,
+			  "binder: %d:%d %s ref deleted",
+			  proc->pid, thread->pid, debug_string);
+		  } else {
+			binder_debug(BINDER_DEBUG_USER_REFS,
+			  "binder: %d:%d %s ref %d desc %d s %d w %d for node %d\n",
+			  proc->pid, thread->pid, debug_string,
+			  ref->debug_id, ref->desc, ref->strong,
+			  ref->weak, ref->node->debug_id);
+		  }
+		  break;
 		}
 		case BC_INCREFS_DONE:
 		case BC_ACQUIRE_DONE: {
