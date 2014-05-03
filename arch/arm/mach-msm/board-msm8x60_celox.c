@@ -16794,6 +16794,7 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	 * Initialize RPM first as other drivers and devices may need
 	 * it for their initialization.
 	 */
+
 #ifdef CONFIG_MSM_RPM
 	BUG_ON(msm_rpm_init(&msm_rpm_data));
 #endif
