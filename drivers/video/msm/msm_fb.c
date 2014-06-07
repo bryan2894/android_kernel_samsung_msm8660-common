@@ -461,6 +461,12 @@ static int msm_fb_probe(struct platform_device *pdev)
 
 	bf_supported = mdp4_overlay_borderfill_supported();
 
+#ifdef CONFIG_MACH_SEC
+	/* don't move below */
+	if (mfd->vsync_init != NULL)
+		mfd->vsync_init(0);
+#endif
+
 	rc = msm_fb_register(mfd);
 	if (rc)
 		return rc;
