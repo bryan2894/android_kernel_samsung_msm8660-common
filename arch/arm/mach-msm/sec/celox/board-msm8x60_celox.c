@@ -15335,7 +15335,7 @@ static struct msm_bus_scale_pdata mdp_bus_scale_pdata = {
 };
 
 #endif
-#ifdef CONFIG_MSM_BUS_SCALING
+#ifdef CONFIG_FB_MSM_DTV
 static struct msm_bus_vectors dtv_bus_init_vectors[] = {
 	/* For now, 0th array entry is reserved.
 	 * Please leave 0 as is and don't use it
@@ -15374,25 +15374,6 @@ static struct msm_bus_vectors dtv_bus_def_vectors[] = {
 	},
 };
 
-static struct msm_bus_vectors dtv_bus_hdmi_prim_vectors[] = {
-	/* For now, 0th array entry is reserved.
-	 * Please leave 0 as is and don't use it
-	 */
-	{
-		.src = MSM_BUS_MASTER_MDP_PORT0,
-		.dst = MSM_BUS_SLAVE_SMI,
-		.ab = 2000000000,
-		.ib = 2000000000,
-	},
-	/* Master and slaves can be from different fabrics */
-	{
-		.src = MSM_BUS_MASTER_MDP_PORT0,
-		.dst = MSM_BUS_SLAVE_EBI_CH0,
-		.ab = 2000000000,
-		.ib = 2000000000,
-	},
-};
-
 static struct msm_bus_paths dtv_bus_scale_usecases[] = {
 	{
 		ARRAY_SIZE(dtv_bus_init_vectors),
@@ -15415,27 +15396,6 @@ static struct lcdc_platform_data dtv_pdata = {
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
 	.lcdc_power_save = hdmi_panel_power,
 #endif
-};
-
-static struct msm_bus_paths dtv_hdmi_prim_bus_scale_usecases[] = {
-	{
-		ARRAY_SIZE(dtv_bus_init_vectors),
-		dtv_bus_init_vectors,
-	},
-	{
-		ARRAY_SIZE(dtv_bus_hdmi_prim_vectors),
-		dtv_bus_hdmi_prim_vectors,
-	},
-};
-
-static struct msm_bus_scale_pdata dtv_hdmi_prim_bus_scale_pdata = {
-	dtv_hdmi_prim_bus_scale_usecases,
-	ARRAY_SIZE(dtv_hdmi_prim_bus_scale_usecases),
-	.name = "dtv",
-};
-
-static struct lcdc_platform_data dtv_hdmi_prim_pdata = {
-	.bus_scale_table = &dtv_hdmi_prim_bus_scale_pdata,
 };
 #endif
 
@@ -15662,47 +15622,13 @@ static void __init msm_fb_add_devices(void)
 #else
 	msm_fb_register_device("mipi_dsi", &mipi_dsi_pdata);
 #endif
-#ifdef CONFIG_MSM_BUS_SCALING
+#ifdef CONFIG_FB_MSM_DTV
 	msm_fb_register_device("dtv", &dtv_pdata);
 #endif
 #ifdef CONFIG_FB_MSM_TVOUT
 	msm_fb_register_device("tvenc", &atv_pdata);
 	msm_fb_register_device("tvout_device", NULL);
 #endif
-}
-
-/**
- * Set MDP clocks to high frequency to avoid underflow when
- * using high resolution 1200x1920 WUXGA/HDMI as primary panels
- */
-static void set_mdp_clocks_for_wuxga(void)
-{
-	mdp_sd_smi_vectors[0].ab = 2000000000;
-	mdp_sd_smi_vectors[0].ib = 2000000000;
-	mdp_sd_smi_vectors[1].ab = 2000000000;
-	mdp_sd_smi_vectors[1].ib = 2000000000;
-
-	mdp_sd_ebi_vectors[0].ab = 2000000000;
-	mdp_sd_ebi_vectors[0].ib = 2000000000;
-	mdp_sd_ebi_vectors[1].ab = 2000000000;
-	mdp_sd_ebi_vectors[1].ib = 2000000000;
-
-	mdp_vga_vectors[0].ab = 2000000000;
-	mdp_vga_vectors[0].ib = 2000000000;
-	mdp_vga_vectors[1].ab = 2000000000;
-	mdp_vga_vectors[1].ib = 2000000000;
-
-	mdp_720p_vectors[0].ab = 2000000000;
-	mdp_720p_vectors[0].ib = 2000000000;
-	mdp_720p_vectors[1].ab = 2000000000;
-	mdp_720p_vectors[1].ib = 2000000000;
-
-	mdp_1080p_vectors[0].ab = 2000000000;
-	mdp_1080p_vectors[0].ib = 2000000000;
-	mdp_1080p_vectors[1].ab = 2000000000;
-	mdp_1080p_vectors[1].ib = 2000000000;
-
-	mdp_pdata.mdp_max_clk = 200000000;
 }
 
 #if 0 // (defined(CONFIG_MARIMBA_CORE)) && (defined(CONFIG_MSM_BT_POWER) || defined(CONFIG_MSM_BT_POWER_MODULE))
