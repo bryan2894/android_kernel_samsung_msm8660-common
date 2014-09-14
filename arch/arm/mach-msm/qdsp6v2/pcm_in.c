@@ -353,7 +353,7 @@ static int pcm_in_open(struct inode *inode, struct file *file)
 	snprintf(name, sizeof name, "pcm_in_%x", pcm->ac->session);
 	wake_lock_init(&pcm->wakelock, WAKE_LOCK_SUSPEND, name);
 	snprintf(name, sizeof name, "pcm_in_idle_%x", pcm->ac->session);
-	wake_lock_init(&pcm->idlelock, WAKE_LOCK_IDLE, name);
+	wake_lock_init(&pcm->idlelock, WAKE_LOCK_SUSPEND, name);
 
 	pcm->rec_mode = VOC_REC_NONE;
 

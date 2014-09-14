@@ -15,7 +15,7 @@
 #include <linux/miscdevice.h>
 #include <linux/mutex.h>
 #include <linux/uaccess.h>
-#include <linux/ion.h>
+#include <linux/msm_ion.h>
 #include <linux/mm.h>
 #include <mach/qdsp6v2/audio_acdb.h>
 
@@ -642,7 +642,7 @@ static int register_memory(void)
 		goto err;
 	}
 
-	acdb_data.ion_handle = ion_import_fd(acdb_data.ion_client,
+	acdb_data.ion_handle = ion_import_dma_buf(acdb_data.ion_client,
 		atomic_read(&acdb_data.map_handle));
 	if (IS_ERR_OR_NULL(acdb_data.ion_handle)) {
 		pr_err("%s: Could not import map handle!!!\n", __func__);
@@ -658,7 +658,7 @@ static int register_memory(void)
 	}
 
 	kvaddr = (unsigned long)ion_map_kernel(acdb_data.ion_client,
-		acdb_data.ion_handle, 0);
+		acdb_data.ion_handle);
 	if (IS_ERR_OR_NULL(&kvaddr)) {
 		pr_err("%s: Could not get kernel virt addr!!!\n", __func__);
 		result = -EINVAL;

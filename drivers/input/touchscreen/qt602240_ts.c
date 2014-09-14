@@ -306,7 +306,7 @@ static int write_mem(struct mxt224_data *data, u16 reg, u8 len, const u8 *buf)
 	return ret == sizeof(tmp) ? 0 : -EIO;
 }
 
-static int __devinit mxt224_reset(struct mxt224_data *data)
+static int mxt224_reset(struct mxt224_data *data)
 {
 	u8 buf = 1u;
 	return write_mem(data, data->cmd_proc + CMD_RESET_OFFSET, 1, &buf);
@@ -1204,11 +1204,11 @@ static void equalize_coordinate(bool detect, u8 id, u16 *px, u16 *py)
 #endif
 #endif  /* DRIVER_FILTER */
 
-static int __devinit mxt224_init_touch_driver(struct mxt224_data *data)
+static int mxt224_init_touch_driver(struct mxt224_data *data)
 {
 	struct object_t *object_table;
 	u32 read_crc = 0;
-	u32 calc_crc;
+	u32 calc_crc = 0;
 	u16 crc_address;
 	u16 dummy;
 	int i;
@@ -1668,7 +1668,7 @@ ERR_RTN_CONTIOIN Check_Err_Condition(void)
 //110926 zero charger & palne noise apply
 static int median_err_setting(void)
 {
-	u16 obj_address;
+	u16 obj_address = 0;
 	u16 size_one;
 	u8 value, state;
 	bool ta_status_check;

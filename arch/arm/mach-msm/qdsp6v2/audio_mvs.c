@@ -1172,7 +1172,7 @@ static int __init audio_mvs_init(void)
 		       WAKE_LOCK_SUSPEND,
 		       "audio_mvs_suspend");
 	wake_lock_init(&audio_mvs_info.idle_lock,
-		       WAKE_LOCK_IDLE,
+		       WAKE_LOCK_SUSPEND,
 		       "audio_mvs_idle");
 
 	rc = misc_register(&audio_mvs_misc);

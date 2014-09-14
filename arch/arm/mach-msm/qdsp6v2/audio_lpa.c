@@ -28,7 +28,7 @@
 #include <linux/debugfs.h>
 #include <linux/delay.h>
 #include <linux/earlysuspend.h>
-#include <linux/ion.h>
+#include <linux/msm_ion.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <asm/atomic.h>
@@ -511,7 +511,7 @@ static int audlpa_ion_add(struct audio *audio,
 		goto client_error;
 	}
 
-	handle = ion_import_fd(client, info->fd);
+	handle = ion_import_dma_buf(client, info->fd);
 	if (IS_ERR_OR_NULL(handle)) {
 		pr_err("%s: could not get handle of the given fd\n", __func__);
 		goto import_error;
@@ -523,7 +523,7 @@ static int audlpa_ion_add(struct audio *audio,
 		goto flag_error;
 	}
 
-	temp_ptr = ion_map_kernel(client, handle, ionflag);
+	temp_ptr = ion_map_kernel(client, handle);
 	if (IS_ERR_OR_NULL(temp_ptr)) {
 		pr_err("%s: could not get virtual address\n", __func__);
 		goto map_error;
@@ -1133,7 +1133,7 @@ done:
 	return rc;
 }
 
-int audlpa_fsync(struct file *file, int datasync)
+int audlpa_fsync(struct file *file, loff_t ppos1, loff_t ppos2, int datasync)
 {
 	struct audio *audio = file->private_data;
 

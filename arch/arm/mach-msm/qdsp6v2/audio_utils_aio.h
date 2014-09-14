@@ -24,7 +24,7 @@
 #include <linux/debugfs.h>
 #include <linux/list.h>
 #include <linux/slab.h>
-#include <linux/ion.h>
+#include <linux/msm_ion.h>
 #include <asm/ioctls.h>
 #include <asm/atomic.h>
 #include <sound/q6asm.h>
@@ -196,7 +196,7 @@ void audio_aio_post_event(struct q6audio_aio *audio, int type,
 		union msm_audio_event_payload payload);
 int audio_aio_release(struct inode *inode, struct file *file);
 long audio_aio_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
-int audio_aio_fsync(struct file *file, int datasync);
+int audio_aio_fsync(struct file *file, loff_t start, loff_t end, int datasync);
 void audio_aio_cb(uint32_t opcode, uint32_t token,
 			uint32_t *payload,  struct q6audio_aio *audio);
 void audio_aio_async_out_flush(struct q6audio_aio *audio);
