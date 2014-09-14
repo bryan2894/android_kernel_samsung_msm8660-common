@@ -597,7 +597,7 @@ static struct branch_clk vpe_axi_clk = {
 		CLK_INIT(vpe_axi_clk.c),
 	},
 };
-
+/*
 static struct branch_clk smi_2x_axi_clk = {
 	.b = {
 		.ctl_reg = MAXI_EN2_REG,
@@ -611,7 +611,7 @@ static struct branch_clk smi_2x_axi_clk = {
 		CLK_INIT(smi_2x_axi_clk.c),
 	},
 };
-
+*/
 /* AHB Interfaces */
 static struct branch_clk amp_p_clk = {
 	.b = {
@@ -3115,7 +3115,8 @@ DEFINE_CLK_RPM(mmfab_clk, mmfab_a_clk, MM_FABRIC, NULL);
 DEFINE_CLK_RPM(mmfpb_clk, mmfpb_a_clk, MMFPB, NULL);
 DEFINE_CLK_RPM(sfab_clk, sfab_a_clk, SYSTEM_FABRIC, NULL);
 DEFINE_CLK_RPM(sfpb_clk, sfpb_a_clk, SFPB, NULL);
-DEFINE_CLK_RPM(smi_clk, smi_a_clk, SMI, &smi_2x_axi_clk.c);
+//DEFINE_CLK_RPM(smi_clk, smi_a_clk, SMI, &smi_2x_axi_clk.c);
+DEFINE_CLK_RPM(smi_clk, smi_a_clk, SMI, NULL);
 
 static DEFINE_CLK_VOTER(dfab_dsps_clk, &dfab_clk.c, 0);
 static DEFINE_CLK_VOTER(dfab_usb_hs_clk, &dfab_clk.c, 0);
@@ -3295,7 +3296,7 @@ static struct measure_sel measure_mux[] = {
 	{ TEST_MM_HS(0x1C), &vpe_clk.c },
 	{ TEST_MM_HS(0x1E), &hdmi_tv_clk.c },
 	{ TEST_MM_HS(0x1F), &mdp_tv_clk.c },
-	{ TEST_MM_HS(0x24), &smi_2x_axi_clk.c },
+//	{ TEST_MM_HS(0x24), &smi_2x_axi_clk.c },
 
 	{ TEST_MM_HS2X(0x24), &smi_clk.c },
 	{ TEST_MM_HS2X(0x24), &smi_a_clk.c },
