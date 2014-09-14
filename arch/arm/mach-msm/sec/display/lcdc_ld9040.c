@@ -62,7 +62,6 @@
 #include <linux/fb.h>
 #include <linux/backlight.h>
 #include <linux/miscdevice.h>
-#include "mdp4_video_enhance.h"
 
 #define MAPPING_TBL_AUTO_BRIGHTNESS 1
 #include "lcdc_ld9040_seq.h"
@@ -2231,8 +2230,6 @@ static int __devinit ld9040_probe(struct platform_device *pdev)
 		DPRINT("lcd_power failed to add sysfs entries\n");
 //		dev_err(&(pdev->dev), "failed to add sysfs entries\n");
 
-	// mdnie sysfs create
-	init_mdnie_class();
 ////////////
 
 #ifdef MAPPING_TBL_AUTO_BRIGHTNESS
