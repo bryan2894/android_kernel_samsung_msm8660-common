@@ -77,6 +77,9 @@
 #include <linux/crc32.h> /* For counting font checksums */
 #include <asm/fb.h>
 #include <asm/irq.h>
+#ifdef CONFIG_MACH_SEC
+#include <asm/system.h>
+#endif
 
 #include "fbcon.h"
 
@@ -2191,6 +2194,12 @@ static int fbcon_switch(struct vc_data *vc)
 	 */
 	info->var.activate = var.activate;
 	var.vmode |= info->var.vmode & ~FB_VMODE_MASK;
+
+#ifdef CONFIG_MACH_SEC
+	/* Retain the reserved[] array  */
+	memcpy(var.reserved, info->var.reserved, sizeof(var.reserved));
+#endif
+
 	fb_set_var(info, &var);
 	ops->var = info->var;
 

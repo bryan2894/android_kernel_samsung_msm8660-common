@@ -279,7 +279,11 @@ struct fb_var_screeninfo {
 	__u32 vmode;			/* see FB_VMODE_*		*/
 	__u32 rotate;			/* angle we rotate counter clockwise */
 	__u32 colorspace;		/* colorspace for FOURCC-based modes */
+#ifdef CONFIG_MACH_SEC
+	__u32 reserved[5];		/* Reserved for future compatibility */
+#else
 	__u32 reserved[4];		/* Reserved for future compatibility */
+#endif
 };
 
 struct fb_cmap {
