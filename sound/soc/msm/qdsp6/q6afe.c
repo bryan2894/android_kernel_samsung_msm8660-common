@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1528,17 +1528,17 @@ static int __init afe_init(void)
 	atomic_set(&this_afe.state, 0);
 	atomic_set(&this_afe.status, 0);
 	this_afe.apr = NULL;
-
 #ifdef CONFIG_DEBUG_FS
 	debugfs_afelb = debugfs_create_file("afe_loopback",
-	S_IFREG | S_IWUSR | S_IWGRP, NULL, (void *) "afe_loopback",
+	0220, NULL, (void *) "afe_loopback",
 	&afe_debug_fops);
 
 	debugfs_afelb_gain = debugfs_create_file("afe_loopback_gain",
-	S_IFREG | S_IWUSR | S_IWGRP, NULL, (void *) "afe_loopback_gain",
+	0220, NULL, (void *) "afe_loopback_gain",
 	&afe_debug_fops);
-#endif
 
+
+#endif
 	return 0;
 }
 
