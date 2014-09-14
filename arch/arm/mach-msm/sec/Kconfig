@@ -60,3 +60,65 @@ config VP_A2220
 	depends on I2C
 	help
 	  A2220 Voice Processor Driver implemented by ysseo.
+
+config MSM_RPC_SDIO_XPRT
+	depends on MSM_SDIO_AL
+	default y
+	bool "MSM SDIO XPRT Layer"
+	help
+	  SDIO Transport Layer for RPC Rouer
+
+config MSM_RPC_SDIO_DEBUG
+	depends on MSM_RPC_SDIO_XPRT
+	default y
+	bool "MSM SDIO XPRT debug support"
+	help
+	  Support for debugging SDIO XPRT
+
+config MSM_SDIO_AL
+	depends on ((ARCH_MSM7X30 || MACH_MSM8X60_FUSN_FFA || MACH_TYPE_MSM8X60_FUSION) && HAS_WAKELOCK)
+	default y
+	tristate "SDIO-Abstraction-Layer"
+	help
+	  Support MSM<->MDM Communication over SDIO bus.
+	  MDM SDIO-Client should have pipes support.
+
+config MSM_SDIO_DMUX
+	bool "SDIO Data Mux Driver"
+	depends on MSM_SDIO_AL
+	default n
+	help
+	  Support Muxed Data Channels over SDIO interface.
+
+config MSM_SDIO_TTY
+	bool "SDIO TTY Driver"
+	depends on MSM_SDIO_AL
+	default n
+	help
+	  Provides a TTY driver SDIO TTY
+	  This driver can be used by user space
+	  applications for passing data through the
+	  SDIO interface.
+
+config MSM_SDIO_CMUX
+	bool "SDIO CMUX Driver"
+	depends on MSM_SDIO_AL
+	default n
+	help
+	  Provides a Muxed port interface over SDIO QMI
+
+config MSM_SDIO_CTL
+	bool "SDIO CTL Driver"
+	depends on MSM_SDIO_CMUX
+	default n
+	help
+	  Provides a binary SDIO control port interface.
+
+config MSM_SDIO_SMEM
+        depends on MSM_SDIO_AL
+        default n
+        bool "SDIO SMEM for remote storage"
+        help
+          Copies data from remote MDM9K memory to local MSM8x60
+	  memory. Used by remote storage client to shadow
+	  MDM9K filesystem.
