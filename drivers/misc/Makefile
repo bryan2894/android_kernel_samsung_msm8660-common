@@ -75,3 +75,6 @@ obj-$(CONFIG_QFP_FUSE) += qfp_fuse.o
 obj-y += tspdrv/
 obj-$(CONFIG_BU52031NVX) += pm8xxx-cradle.o
 obj-$(CONFIG_SLIMPORT_ANX7808)	+= slimport_anx7808/
+obj-$(CONFIG_VIBETONZ) += vibetonz/
+obj-$(CONFIG_VP_A2220) += a2220.o
+obj-$(CONFIG_SEC_MISC) += sec_misc.o sec_level.o sec_param.o

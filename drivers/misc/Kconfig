@@ -691,4 +691,10 @@ source "drivers/misc/carma/Kconfig"
 source "drivers/misc/altera-stapl/Kconfig"
 source "drivers/misc/slimport_anx7808/Kconfig"
 
+menuconfig VIBETONZ
+        tristate "Vibetonz"
+        default m
+        help
+          Say Y to enable Vibetonz support.
+
 endmenu
