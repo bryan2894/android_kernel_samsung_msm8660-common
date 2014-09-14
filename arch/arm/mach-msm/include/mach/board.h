@@ -489,6 +489,8 @@ struct msm_i2c_platform_data {
 	int pri_dat;
 	int aux_clk;
 	int aux_dat;
+	const char *clk;
+	const char *pclk;
 	int src_clk_rate;
 	int use_gsbi_shared_mode;
 	int keep_ahb_clk_on;
