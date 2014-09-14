@@ -395,6 +395,12 @@ config CHARGER_SMB328A
 	help
 	  Say Y here to enable support for charger with SMB328A chip
 
+config BATTERY_SEC
+	bool "Enable SEC battery driver"
+	default n
+	help
+	  Say Y here to enable support for batteries with SEC features.
+
 config PM8921_CHARGER
 	tristate "PM8921 Charger driver"
 	depends on MFD_PM8921_CORE
