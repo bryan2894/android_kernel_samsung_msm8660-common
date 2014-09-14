@@ -426,6 +426,26 @@ static int marimba_add_child(struct marimba_platform_data *pdata,
 #endif
 	return 0;
 }
+/* qualcomm patch begins */
+
+
+int timpani_reset(void)
+{
+	struct marimba *marimba = &marimba_modules[MARIMBA_SLAVE_ID_MARIMBA];
+	struct marimba_platform_data *pdata = marimba_pdata;
+	int rc = 0;
+	u8 buf[1];
+
+	buf[0] = 0x10;
+
+	mutex_lock(&marimba->xfer_lock);
+		rc = pdata->timpani_reset_config();
+	mutex_unlock(&marimba->xfer_lock);
+	marimba_write(marimba, MARIMBA_MODE, buf, 1);
+	return rc;
+}
+EXPORT_SYMBOL(timpani_reset);
+/* Qualcomm patch ends */
 
 int marimba_gpio_config(int gpio_value)
 {
