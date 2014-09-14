@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -31,7 +31,14 @@
 
 #define APR_MAX_BUF   8192
 
+/*When a MO call is made immediately after boot,
+  time out is happening and device resetting.
+  Tuned the time out and increased from 5sec to 16sec*/
+#if 0
 #define APR_OPEN_TIMEOUT_MS 5000
+#else
+#define APR_OPEN_TIMEOUT_MS 16000
+#endif
 
 typedef void (*apr_svc_cb_fn)(void *buf, int len, void *priv);
 struct apr_svc_ch_dev *apr_tal_open(uint32_t svc, uint32_t dest,

@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -29,6 +29,10 @@ struct snddev_icodec_data {
 	void (*pamp_off) (void);
 	int (*voltage_on) (void);
 	void (*voltage_off) (void);
+#ifdef CONFIG_VP_A2220
+	int (*a2220_vp_on) (void);
+	void (*a2220_vp_off) (void);
+#endif
 	u32 dev_vol_type;
 };
 
