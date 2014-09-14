@@ -1,0 +1,62 @@
+config MACH_SEC
+	bool
+
+choice
+	prompt "TARGET SERIES"
+
+	config TARGET_SERIES_CELOX
+		bool "SERIES_CELOX"
+		help
+		  Support models of celox series
+endchoice
+
+choice
+	prompt "TARGET LOCALE"
+
+	config TARGET_LOCALE_USA
+		bool "Locale USA "
+		help
+		  Support USA Board
+endchoice
+
+choice
+	prompt "Operator in the USA market"
+	default USA_OPERATOR_ATT
+		depends on TARGET_LOCALE_USA
+
+	config USA_OPERATOR_ATT
+		bool "USA Operator ATT"
+endchoice
+
+choice
+	prompt "USA Model Name"
+	depends on TARGET_LOCALE_USA
+
+	config USA_MODEL_SGH_I727
+        	depends on (TARGET_LOCALE_USA && USA_OPERATOR_ATT)
+		bool "USA ATT SGH-I727"
+endchoice
+
+source "arch/arm/mach-msm/sec/display/Kconfig"
+
+config SEC_AUDIO_DEVICE
+	bool "Sec AUDIO DEVICE"
+	help
+	  Support Sec audio Device
+
+config PMIC8058_XOADC_CAL
+	bool "PMIC8058 adc calibration"
+	help
+	  Support PMIC8058 adc calibration
+
+config SEC_LOG_LAST_KMSG
+	default n
+	bool "Enable /proc/last_kmsg support: if EMBEDDED"
+	help
+	  This option enables /proc/last_kmsg support.
+
+config VP_A2220
+	tristate "A2220 Voice Processor Driver"
+	depends on I2C
+	help
+	  A2220 Voice Processor Driver implemented by ysseo.
