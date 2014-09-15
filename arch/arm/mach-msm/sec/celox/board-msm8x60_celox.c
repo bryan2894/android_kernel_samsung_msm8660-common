@@ -7253,6 +7253,9 @@ static struct i2c_board_info motor_i2c_borad_info[] = {
 	},
 };
 
+#define GPIO_BT_WAKE        86
+#define GPIO_BT_HOST_WAKE   127
+
 static struct msm_serial_hs_platform_data msm_uart_dm1_pdata = {
 	.inject_rx_on_wakeup	= 1,
 	.rx_to_inject		= 0xFD,
@@ -7261,6 +7264,10 @@ static struct msm_serial_hs_platform_data msm_uart_dm1_pdata = {
 	.uart_rx_gpio		= 54,
 	.uart_cts_gpio		= 55,
 	.uart_rfr_gpio		= 56,
+#ifdef CONFIG_SERIAL_MSM_HS_BRCM
+        .bt_wakeup_pin = GPIO_BT_WAKE,
+        .host_wakeup_pin = GPIO_BT_HOST_WAKE,
+#endif
 };
 
 #if defined(CONFIG_GPIO_SX150X) || defined(CONFIG_GPIO_SX150X_MODULE)
