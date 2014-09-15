@@ -6,6 +6,7 @@ choice
 
 	config TARGET_SERIES_CELOX
 		bool "SERIES_CELOX"
+		select MACH_SEC
 		help
 		  Support models of celox series
 endchoice
