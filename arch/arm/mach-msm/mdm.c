@@ -173,6 +173,14 @@ static long charm_modem_ioctl(struct file *filp, unsigned int cmd,
 		return -EINVAL;
 	}
 
+	/*
+	 * Sultanxda: wait for 30 sec on first boot
+	 * so modem doesn't crash the device when
+	 * entering sleep.
+	 */
+	if (first_boot)
+		msleep(30000);
+
 	CHARM_DBG("%s: Entering ioctl cmd = %d\n", __func__, _IOC_NR(cmd));
 	switch (cmd) {
 	case WAKE_CHARM:
