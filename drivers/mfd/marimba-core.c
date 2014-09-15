@@ -893,7 +893,9 @@ static int __devinit marimba_probe(struct i2c_client *client,
 
 	status = marimba_add_child(pdata, id->driver_data);
 
-	marimba_pdata = pdata;
+//	marimba_pdata = pdata;
+	if (client->addr == 0xD) /* need to keep reset pointer only for timpani */
+		marimba_pdata = pdata;
 
 	return 0;
 
