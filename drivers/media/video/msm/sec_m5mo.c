@@ -19,6 +19,7 @@ ver 0.1 : only preview (base on universal)
 #include <linux/slab.h>
 #include <linux/firmware.h>
 #include <linux/kernel.h>
+#include <linux/module.h>
 
 #include "sec_m5mo.h"
 #include "sec_cam_dev.h"

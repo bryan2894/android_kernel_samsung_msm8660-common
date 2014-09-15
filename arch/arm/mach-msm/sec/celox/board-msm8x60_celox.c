@@ -16264,7 +16264,7 @@ static DEVICE_ATTR(sec_debug_level, S_IRUGO | S_IWUGO, show_sec_debug_level, sto
 #ifdef CONFIG_BROADCOM_WIFI
 int __init brcm_wlan_init(void);
 #endif
-#ifdef CONFIG_BATTERY_SEC
+#if defined(CONFIG_BATTERY_SEC) && defined(CONFIG_SEC_DEBUG)
 extern unsigned int sec_get_lpm_mode(void);
 #endif
 static void __init msm8x60_init(struct msm_board_data *board_data)
@@ -16278,7 +16278,7 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	};
 #endif
 
-#ifdef CONFIG_BATTERY_SEC
+#if defined(CONFIG_BATTERY_SEC) && defined(CONFIG_SEC_DEBUG)
 	is_lpm_boot = sec_get_lpm_mode();
 #endif
 

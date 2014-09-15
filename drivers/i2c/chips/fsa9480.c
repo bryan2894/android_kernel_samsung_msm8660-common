@@ -284,7 +284,8 @@ void FSA9480_CheckAndHookAudioDock(int value, int onoff)
 		if (onoff)
 		{
 			//skip controlling the sii9234 on lpm mode
-			if(!sec_get_lpm_mode())
+			// if(!sec_get_lpm_mode()) Sultanxda
+			if(1)
 			{
 #if defined(CONFIG_VIDEO_MHL_V1)
 				sii9234_cfg_power(0);	//Turn Off power to SiI9234

@@ -43,7 +43,7 @@
 #define SNDDEV_VREG_LOW_POWER_LOAD (36000)
 #define SNDDEV_VREG_HIGH_POWER_LOAD (56000)
 
-int msm_codec_i2s_slave_mode;
+bool msm_codec_i2s_slave_mode;
 
 /* Context for each internal codec sound device */
 struct snddev_icodec_state {

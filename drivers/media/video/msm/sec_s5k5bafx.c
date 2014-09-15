@@ -10,6 +10,7 @@ CAMERA DRIVER FOR 2M CAM (SYS.LSI)
 #include <linux/i2c.h>
 #include <linux/uaccess.h>
 #include <linux/miscdevice.h>
+#include <linux/module.h>
 #include <linux/slab.h>
 #include <media/msm_camera.h>
 #include <mach/gpio.h>
