@@ -45,6 +45,9 @@
 #include <mach/clk.h>
 #include <linux/uaccess.h>
 #include <linux/wakelock.h>
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+#include <linux/usb/composite.h>
+#endif
 
 static const char driver_name[] = "msm72k_udc";
 
@@ -1533,6 +1536,9 @@ static void usb_do_work(struct work_struct *w)
 	struct msm_otg *otg = to_msm_otg(ui->xceiv);
 	unsigned long iflags;
 	unsigned flags, _vbus;
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+	struct usb_composite_dev *cdev;
+#endif
 
 	for (;;) {
 		spin_lock_irqsave(&ui->lock, iflags);
@@ -1607,6 +1613,15 @@ static void usb_do_work(struct work_struct *w)
 				dev_dbg(&ui->pdev->dev,
 					"msm72k_udc: ONLINE -> OFFLINE\n");
 
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+				cdev = get_gadget_data(&ui->gadget);
+//				if (!is_b_sess_vld())
+				{
+					printk("off mute_switch\n");
+					cdev->mute_switch = 0;
+					cdev->force_disconnect = 1;
+				}
+#endif
 				atomic_set(&ui->running, 0);
 				atomic_set(&ui->remote_wakeup, 0);
 				atomic_set(&ui->configured, 0);
@@ -1712,6 +1727,12 @@ static void usb_do_work(struct work_struct *w)
 				usb_reset(ui);
 				ui->state = USB_STATE_ONLINE;
 				usb_do_work_check_vbus(ui);
+#ifdef CONFIG_USB_SWITCH_FSA9480
+				if (ui->flags & USB_FLAG_VBUS_ONLINE) {
+					if (ui->pdata->check_microusb)
+						ui->pdata->check_microusb();
+				}
+#endif
 				ret = request_irq(otg->irq, usb_interrupt,
 							IRQF_SHARED,
 							ui->pdev->name, ui);

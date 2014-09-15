@@ -71,6 +71,10 @@ MODULE_PARM_DESC(rndis_multipacket_dl_disable,
  *   - MS-Windows drivers sometimes emit undocumented requests.
  */
 
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+#define CSY_SAMSUNG_FIX_IAD_INTERFACE_NUMBER
+#endif
+
 struct f_rndis {
 	struct gether			port;
 	u8				ctrl_id, data_id;
@@ -500,6 +504,16 @@ rndis_setup(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
 	u16			w_value = le16_to_cpu(ctrl->wValue);
 	u16			w_length = le16_to_cpu(ctrl->wLength);
 
+
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+	/*if you use composite framework and RNDIS is not first in all function list,
+             you have to change w_index number. And please use RNDIS only if you possible.
+	 */
+	if (w_index == 0)
+		w_index = rndis->ctrl_id;
+#endif
+
+
 	/* composite driver infrastructure handles everything except
 	 * CDC class messages; interface activation uses set_alt().
 	 */
@@ -701,7 +715,11 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 	if (status < 0)
 		goto fail;
 	rndis->ctrl_id = status;
+#ifdef CSY_SAMSUNG_FIX_IAD_INTERFACE_NUMBER
+		/* Nothing to do */
+#else
 	rndis_iad_descriptor.bFirstInterface = status;
+#endif
 
 	rndis_control_intf.bInterfaceNumber = status;
 	rndis_union_desc.bMasterInterface0 = status;
