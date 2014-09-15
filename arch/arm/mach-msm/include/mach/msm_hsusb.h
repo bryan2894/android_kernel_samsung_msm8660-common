@@ -202,6 +202,9 @@ struct msm_usb_host_platform_data {
 	void (*vbus_power) (unsigned phy_info, int on);
 	int  (*vbus_init)(int init);
 	struct clk *ebi1_clk;
+#ifdef CONFIG_USB_HOST_NOTIFY
+	int host_notify;
+#endif
 };
 
 #endif
