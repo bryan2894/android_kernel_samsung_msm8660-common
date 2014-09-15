@@ -62,6 +62,12 @@ config VP_A2220
 	help
 	  A2220 Voice Processor Driver implemented by ysseo.
 
+config BT_BCM4330
+	bool "Enable BCM4330 driver"
+	default n
+	help
+	  Adds BCM4330 RFKILL driver for Broadcom BCM4330 chipset
+
 config MSM_RPC_SDIO_XPRT
 	depends on MSM_SDIO_AL
 	default y
