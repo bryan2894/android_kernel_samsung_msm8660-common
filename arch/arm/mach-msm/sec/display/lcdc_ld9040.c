@@ -1559,8 +1559,6 @@ static int get_gamma_value_from_bl(int bl)
 	              DPRINT("%s >>> bl_value:%d , do not gamma_update. \n ",__func__,bl);
 	              break;
         	}
-
-	DPRINT("%s >>> bl_value:%d, gamma_value: %d. \n ",__func__,bl,gamma_value);
 #else
 	int gamma_val_x10 =0;
 	if(bl >= MIN_BL){
