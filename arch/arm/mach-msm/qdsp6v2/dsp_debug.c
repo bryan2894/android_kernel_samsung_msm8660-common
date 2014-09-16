@@ -25,7 +25,7 @@
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
-#include "../proc_comm.h"
+#include <mach/proc_comm.h>
 #include <mach/debug_mm.h>
 #include <mach/msm_subsystem_map.h>
 #include <mach/qdsp6v2/dsp_debug.h>
