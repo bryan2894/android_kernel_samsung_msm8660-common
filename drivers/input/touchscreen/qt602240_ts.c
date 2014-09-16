@@ -1481,13 +1481,7 @@ static void report_input_data(struct mxt224_data *data)
 //		if (touch_is_pressed_arr[i] < 2) {
 		if (g_debug_switch)
 				printk(KERN_DEBUG "[TSP] ID-%d, %4d,%4d  UD:%d \n", i, data->fingers[i].x, data->fingers[i].y, touch_is_pressed_arr[i]);
-			else 
-			      {
-			        #ifndef CONFIG_USA_MODEL_SGH_T989
-				printk(KERN_DEBUG "[TSP] ID-%d,UD:%d \n", i, 
-					touch_is_pressed_arr[i]);  
-				#endif
-			      }		
+
 //		}
 
 		tsp_pattern_tracking(i, data->fingers[i].x, data->fingers[i].y);
