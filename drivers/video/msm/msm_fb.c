@@ -4255,6 +4255,7 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 		break;
 
 	case MSMFB_DISPLAY_COMMIT:
+	case 0x40a86da4:
 		ret = msmfb_display_commit(info, argp);
 		break;
 
