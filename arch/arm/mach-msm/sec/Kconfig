@@ -129,3 +129,11 @@ config MSM_SDIO_SMEM
           Copies data from remote MDM9K memory to local MSM8x60
 	  memory. Used by remote storage client to shadow
 	  MDM9K filesystem.
+
+config MSM_SDIO_INIT_WORKAROUND
+	bool "Delay modem SDIO detection"
+	depends on TARGET_SERIES_CELOX
+	default n
+	help
+	  Delay modem SDIO init by 40 seconds to prevent the
+	  modem from crashing the device when entering sleep.
