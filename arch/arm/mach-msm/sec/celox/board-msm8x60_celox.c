@@ -16282,7 +16282,7 @@ extern unsigned int sec_get_lpm_mode(void);
 #ifdef CONFIG_MSM_SDIO_INIT_WORKAROUND
 /*
  * Sultanxda: delay msm8x60_multi_sdio_init (modem SDIO detection)
- * by 40 seconds so the modem doesn't crash the device when
+ * by 45 seconds so the modem doesn't crash the device when
  * entering sleep.
  */
 
@@ -16303,7 +16303,7 @@ static void multi_sdio_delayed_init(struct work_struct *work)
 
 end:
 	schedule_delayed_work(&multi_sdio_init,
-		msecs_to_jiffies(40000));
+		msecs_to_jiffies(45000));
 }
 #endif
 

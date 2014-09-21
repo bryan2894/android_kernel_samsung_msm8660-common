@@ -130,5 +130,5 @@ config MSM_SDIO_INIT_WORKAROUND
 	depends on TARGET_SERIES_CELOX
 	default n
 	help
-	  Delay modem SDIO init by 40 seconds to prevent the
+	  Delay modem SDIO init by 45 seconds to prevent the
 	  modem from crashing the device when entering sleep.
