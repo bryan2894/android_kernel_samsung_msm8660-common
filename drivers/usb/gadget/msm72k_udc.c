@@ -156,6 +156,7 @@ static void usb_do_remote_wakeup(struct work_struct *w);
 #define EPT_PRIME_CHECK_DELAY	(jiffies + msecs_to_jiffies(1000))
 
 struct usb_info {
+	struct usb_gadget		gadget; // for usb lock change position.
 	/* lock for register/queue/device state changes */
 	spinlock_t lock;
 
@@ -207,7 +208,7 @@ struct usb_info {
 	unsigned long dTD_update_fail_count;
 	unsigned long dTD_workaround_fail_count;
 
-	struct usb_gadget		gadget;
+//	struct usb_gadget		gadget;
 	struct usb_gadget_driver	*driver;
 	struct switch_dev sdev;
 
@@ -517,6 +518,15 @@ static void config_ept(struct msm_endpoint *ept)
 {
 	struct usb_info *ui = ept->ui;
 	unsigned cfg = CONFIG_MAX_PKT(ept->ep.maxpacket) | CONFIG_ZLT;
+	const struct usb_endpoint_descriptor *desc = ept->ep.desc;
+	unsigned mult = 0;
+
+	if (desc && ((desc->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK)
+			== USB_ENDPOINT_XFER_ISOC)) {
+		cfg &= ~(CONFIG_MULT);
+		mult = ((ept->ep.maxpacket >> CONFIG_MULT_SHIFT) + 1) & 0x03;
+		cfg |= (mult << (ffs(CONFIG_MULT) - 1));
+	}
 
 	/* ep0 out needs interrupt-on-setup */
 	if (ept->bit == 0)
@@ -2686,6 +2696,8 @@ static int msm72k_probe(struct platform_device *pdev)
 	ui->sdev.name = DRIVER_NAME;
 	ui->sdev.print_name = print_switch_name;
 	ui->sdev.print_state = print_switch_state;
+
+	platform_set_drvdata(pdev,ui); // for usb lock
 
 	retval = switch_dev_register(&ui->sdev);
 	if (retval)

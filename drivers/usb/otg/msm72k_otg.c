@@ -320,6 +320,31 @@ static inline void set_driver_amplitude(struct msm_otg *dev)
 	ulpi_write(dev, res, ULPI_CONFIG_REG2);
 }
 
+// for receiver sensitivity
+#define ULPI_SQUELCH_LEVEL_MASK	(3 << 6)
+#define ULPI_CONFIG_REG4	0X33
+
+enum squelch_level {
+	SQUELCH_LEVEL_1,
+	SQUELCH_LEVEL_2 = (1 << 6),
+	SQUELCH_LEVEL_3 = (1 << 7),
+	SQUELCH_LEVEL_4 = (3 << 6),
+};
+
+static inline void set_squelch_level(struct msm_otg *dev)
+{
+	unsigned res = 0;
+
+	if (!dev->pdata)
+		return;
+
+	res = ulpi_read(dev, ULPI_CONFIG_REG4);
+
+	res &= ~ULPI_SQUELCH_LEVEL_MASK;
+	res |= SQUELCH_LEVEL_1;
+	ulpi_write(dev, res, ULPI_CONFIG_REG4);
+}
+
 static const char *state_string(enum usb_otg_state state)
 {
 	switch (state) {
@@ -849,7 +874,7 @@ static int msm_otg_resume(struct msm_otg *dev)
 		}
 	}
 	if (dev->pdata->ldo_set_voltage)
-		dev->pdata->ldo_set_voltage(3400);
+		dev->pdata->ldo_set_voltage(3600000);
 
 	/* Vote for TCXO when waking up the phy */
 	ret = msm_xo_mode_vote(dev->xo_handle, MSM_XO_MODE_ON);
@@ -1659,6 +1684,7 @@ reset_link:
 	set_cdr_auto_reset(dev);
 	set_driver_amplitude(dev);
 	set_se1_gating(dev);
+	set_squelch_level(dev);
 
 	writel(0x0, USB_AHB_BURST);
 	writel(0x00, USB_AHB_MODE);
@@ -1839,7 +1865,7 @@ static void msm_otg_sm_work(struct work_struct *w)
 			msm_otg_put_suspend(dev);
 
 			if (dev->pdata->ldo_set_voltage)
-				dev->pdata->ldo_set_voltage(3075);
+				dev->pdata->ldo_set_voltage(3050000);
 		}
 		break;
 	case OTG_STATE_B_SRP_INIT:
