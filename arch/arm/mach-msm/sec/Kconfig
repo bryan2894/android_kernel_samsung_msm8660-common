@@ -21,20 +21,11 @@ choice
 endchoice
 
 choice
-	prompt "Operator in the USA market"
-	default USA_OPERATOR_ATT
-		depends on TARGET_LOCALE_USA
-
-	config USA_OPERATOR_ATT
-		bool "USA Operator ATT"
-endchoice
-
-choice
 	prompt "USA Model Name"
 	depends on TARGET_LOCALE_USA
 
 	config USA_MODEL_SGH_I727
-        	depends on (TARGET_LOCALE_USA && USA_OPERATOR_ATT)
+		depends on TARGET_LOCALE_USA
 		bool "USA ATT SGH-I727"
 endchoice
 
