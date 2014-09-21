@@ -2518,7 +2518,7 @@ static struct rcg_clk mdp_vsync_clk = {
 static struct clk_freq_tbl clk_tbl_pixel_mdp[] = {
 	F_PIXEL_MDP(        0, gnd,  1,   0,    0),
 	F_PIXEL_MDP( 25600000, pll8, 3,   1,    5),
-#ifdef CONFIG_USA_MODEL_SGH_I727
+#if defined(CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_T989)
 	F_PIXEL_MDP( 27400000, pll8, 1,	  1,   14),
 #endif
 	F_PIXEL_MDP( 42667000, pll8, 1,   1,    9),

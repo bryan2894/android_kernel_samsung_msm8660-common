@@ -27,6 +27,10 @@ choice
 	config USA_MODEL_SGH_I727
 		depends on TARGET_LOCALE_USA
 		bool "USA ATT SGH-I727"
+
+	config USA_MODEL_SGH_T989
+		depends on TARGET_LOCALE_USA
+		bool "USA ATT SGH-T989"
 endchoice
 
 source "arch/arm/mach-msm/sec/display/Kconfig"
