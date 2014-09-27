@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -373,6 +373,7 @@ static int snddev_icodec_open_rx(struct snddev_icodec_state *icodec)
 	afe_config.mi2s.channel = afe_channel_mode;
 	afe_config.mi2s.bitwidth = 16;
 	afe_config.mi2s.line = 1;
+	afe_config.mi2s.format = MSM_AFE_I2S_FORMAT_LPCM;
 	if (msm_codec_i2s_slave_mode)
 		afe_config.mi2s.ws = 0;
 	else
@@ -447,8 +448,8 @@ static int snddev_icodec_open_tx(struct snddev_icodec_state *icodec)
 			pr_err("%s: Error turning on a2220 vp\n", __func__);
 			goto error_a2220;
 		}
-	}	
-#endif	
+	}
+#endif
 
 	msm_snddev_tx_mclk_request();
 
@@ -501,6 +502,7 @@ static int snddev_icodec_open_tx(struct snddev_icodec_state *icodec)
 	afe_config.mi2s.channel = afe_channel_mode;
 	afe_config.mi2s.bitwidth = 16;
 	afe_config.mi2s.line = 1;
+	afe_config.mi2s.format = MSM_AFE_I2S_FORMAT_LPCM;
 	if (msm_codec_i2s_slave_mode)
 		afe_config.mi2s.ws = 0;
 	else
@@ -529,9 +531,9 @@ error_invalid_freq:
 
 	if (icodec->data->pamp_off)
 		icodec->data->pamp_off();
-#ifdef CONFIG_VP_A2220	
+#ifdef CONFIG_VP_A2220
 	if (icodec->data->pamp_off)
-		icodec->data->pamp_off();	
+		icodec->data->pamp_off();
 #endif
 	pr_err("%s: encounter error\n", __func__);
 #ifdef CONFIG_VP_A2220

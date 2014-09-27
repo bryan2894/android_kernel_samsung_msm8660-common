@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -313,6 +313,8 @@ static int snddev_mi2s_open(struct msm_snddev_info *dev_info)
 		goto error_invalid_data;
 	}
 	afe_config.mi2s.ws = 1;
+	afe_config.mi2s.format = MSM_AFE_I2S_FORMAT_LPCM;
+
 	rc = afe_open(snddev_mi2s_data->copp_id, &afe_config,
 		dev_info->sample_rate);
 
