@@ -6339,7 +6339,9 @@ int msmsdcc_sdio_al_lpm(struct mmc_host *mmc, bool enable)
 			disable_irq_nosync(host->core_irqres->start);
 			host->sdcc_irq_disabled = 1;
 		}
+		spin_unlock_irqrestore(&host->lock, flags);
 		rc = msmsdcc_setup_clocks(host, false);
+		spin_lock_irqsave(&host->lock, flags);
 		if (rc)
 			goto out;
 
@@ -6357,7 +6359,9 @@ int msmsdcc_sdio_al_lpm(struct mmc_host *mmc, bool enable)
 			host->sdio_wakeupirq_disabled = 0;
 		}
 	} else {
+		spin_unlock_irqrestore(&host->lock, flags);
 		rc = msmsdcc_setup_clocks(host, true);
+		spin_lock_irqsave(&host->lock, flags);
 		if (rc)
 			goto out;
 
