@@ -6325,16 +6325,11 @@ static int msmsdcc_remove(struct platform_device *pdev)
 int msmsdcc_sdio_al_lpm(struct mmc_host *mmc, bool enable)
 {
 	struct msmsdcc_host *host = mmc_priv(mmc);
-	//unsigned long flags;
+	unsigned long flags;
 	int rc = 0;
 
-	/*
-	 * Sultanxda: TODO: fix scheduler BUG when spin locks
-	 * are used.
-	 */
-
 	mutex_lock(&host->clk_mutex);
-	//spin_lock_irqsave(&host->lock, flags);
+	spin_lock_irqsave(&host->lock, flags);
 	pr_debug("%s: %sabling LPM\n", mmc_hostname(mmc),
 			enable ? "En" : "Dis");
 
@@ -6350,9 +6345,9 @@ int msmsdcc_sdio_al_lpm(struct mmc_host *mmc, bool enable)
 
 		if (host->plat->sdio_lpm_gpio_setup &&
 				!host->sdio_gpio_lpm) {
-			//spin_unlock_irqrestore(&host->lock, flags);
+			spin_unlock_irqrestore(&host->lock, flags);
 			host->plat->sdio_lpm_gpio_setup(mmc_dev(mmc), 0);
-			//spin_lock_irqsave(&host->lock, flags);
+			spin_lock_irqsave(&host->lock, flags);
 			host->sdio_gpio_lpm = 1;
 		}
 
@@ -6374,9 +6369,9 @@ int msmsdcc_sdio_al_lpm(struct mmc_host *mmc, bool enable)
 
 		if (host->plat->sdio_lpm_gpio_setup &&
 				host->sdio_gpio_lpm) {
-			//spin_unlock_irqrestore(&host->lock, flags);
+			spin_unlock_irqrestore(&host->lock, flags);
 			host->plat->sdio_lpm_gpio_setup(mmc_dev(mmc), 1);
-			//spin_lock_irqsave(&host->lock, flags);
+			spin_lock_irqsave(&host->lock, flags);
 			host->sdio_gpio_lpm = 0;
 		}
 
@@ -6389,7 +6384,7 @@ int msmsdcc_sdio_al_lpm(struct mmc_host *mmc, bool enable)
 		}
 	}
 out:
-	//spin_unlock_irqrestore(&host->lock, flags);
+	spin_unlock_irqrestore(&host->lock, flags);
 	mutex_unlock(&host->clk_mutex);
 	return rc;
 }
