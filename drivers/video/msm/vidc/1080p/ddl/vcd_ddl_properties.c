@@ -521,6 +521,18 @@ static u32 ddl_set_dec_property(struct ddl_client_context *ddl,
 		}
 	}
 	break;
+	case VCD_I_DVB_CONT_MODE:
+	{
+		DDL_MSG_LOW("Set property VCD_I_DVB_CONT_MODE\n");
+		if (decoder->cont_mode) {
+			if (sizeof(u32) == property_hdr->sz &&
+			DDLCLIENT_STATE_IS(ddl, DDL_CLIENT_OPEN)) {
+				decoder->dvb_cont_mode = *(u32 *)property_value;
+				vcd_status = VCD_S_SUCCESS;
+			}
+		}
+	}
+	break;
 	case VCD_I_DISABLE_DMX:
 	{
 		int disable_dmx_allowed = 0;
@@ -1230,6 +1242,27 @@ static u32 ddl_set_enc_property(struct ddl_client_context *ddl,
 		}
 		break;
 	}
+	case VCD_I_PIC_ORDER_CNT_TYPE:
+	{
+		struct vcd_property_pic_order_cnt_type *poc =
+			(struct vcd_property_pic_order_cnt_type *)
+				property_value;
+		if (sizeof(struct vcd_property_pic_order_cnt_type) ==
+			property_hdr->sz &&
+			encoder->codec.codec == VCD_CODEC_H264 &&
+			(poc->poc_type == 0 || poc->poc_type == 2)) {
+			if (encoder->i_period.b_frames &&
+				poc->poc_type) {
+				DDL_MSG_HIGH("bframes = %d. Setting poc to 0",
+					encoder->i_period.b_frames);
+				encoder->pic_order_cnt_type = 0;
+			} else {
+				encoder->pic_order_cnt_type = poc->poc_type;
+			}
+			vcd_status = VCD_S_SUCCESS;
+		}
+		break;
+	}
 	default:
 		DDL_MSG_ERROR("%s: INVALID ID 0x%x\n", __func__,
 			(int)property_hdr->prop_id);
@@ -1830,6 +1863,15 @@ static u32 ddl_get_enc_property(struct ddl_client_context *ddl,
 			vcd_status = VCD_S_SUCCESS;
 		}
 	break;
+	case VCD_I_PIC_ORDER_CNT_TYPE:
+		if (sizeof(struct vcd_property_pic_order_cnt_type) ==
+			property_hdr->sz) {
+			((struct vcd_property_pic_order_cnt_type *)
+				property_value)->poc_type
+					= encoder->pic_order_cnt_type;
+			vcd_status = VCD_S_SUCCESS;
+		}
+		break;
 	default:
 		DDL_MSG_ERROR("%s: unknown prop_id = 0x%x", __func__,
 			property_hdr->prop_id);
@@ -1877,6 +1919,12 @@ static u32 ddl_set_enc_dynamic_property(struct ddl_client_context *ddl,
 			property_hdr->sz) {
 			encoder->i_period = *i_period;
 			dynamic_prop_change = DDL_ENC_CHANGE_IPERIOD;
+			if (encoder->i_period.b_frames &&
+				encoder->pic_order_cnt_type) {
+				DDL_MSG_HIGH("bframes = %d. Setting poc to 0",
+					encoder->i_period.b_frames);
+				encoder->pic_order_cnt_type = 0;
+			}
 			vcd_status = VCD_S_SUCCESS;
 		}
 	}
@@ -2252,7 +2300,7 @@ u32 ddl_set_default_decoder_buffer_req(struct ddl_decoder_data *decoder,
 	if (estimate) {
 		if (decoder->cont_mode &&
 			decoder->codec.codec == VCD_CODEC_H264) {
-			min_dpb = res_trk_get_min_dpb_count();
+			min_dpb = res_trk_get_min_dpb_count(decoder);
 			min_dpb_from_res_trk = 1;
 		} else
 			min_dpb = ddl_decoder_min_num_dpb(decoder);
@@ -2270,7 +2318,7 @@ u32 ddl_set_default_decoder_buffer_req(struct ddl_decoder_data *decoder,
 		min_dpb = decoder->min_dpb_num;
 		if (decoder->cont_mode &&
 			decoder->codec.codec == VCD_CODEC_H264) {
-			min_dpb = res_trk_get_min_dpb_count();
+			min_dpb = res_trk_get_min_dpb_count(decoder);
 			min_dpb_from_res_trk = 1;
 			if (min_dpb < decoder->min_dpb_num) {
 				DDL_MSG_INFO("Warning: cont_mode dpb count"\
