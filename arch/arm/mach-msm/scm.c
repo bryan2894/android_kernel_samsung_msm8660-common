@@ -28,6 +28,7 @@
 #define SCM_EINVAL_ARG		-2
 #define SCM_ERROR		-1
 #define SCM_INTERRUPTED		1
+#define REQUIRES_SEC
 
 static DEFINE_MUTEX(scm_lock);
 
