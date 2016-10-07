@@ -611,6 +611,7 @@ static ssize_t show_bios_limit(struct cpufreq_policy *policy, char *buf)
 	return sprintf(buf, "%u\n", policy->cpuinfo.max_freq);
 }
 
+#ifdef CONFIG_CPU_VOLTAGE_TABLE
 extern ssize_t acpuclk_get_vdd_levels_str(char *buf);
 extern void acpuclk_set_vdd(unsigned acpu_khz, int vdd);
 
@@ -619,6 +620,7 @@ static ssize_t show_vdd_levels(struct kobject *a, struct attribute *b, char *buf
 }
 
 static ssize_t store_vdd_levels(struct kobject *a, struct attribute *b, const char *buf, size_t count) {
+
 	int i = 0, j;
 	int pair[2] = { 0, 0 };
 	int sign = 0;
@@ -636,9 +638,9 @@ static ssize_t store_vdd_levels(struct kobject *a, struct attribute *b, const ch
 	}
 
 	for (j = 0; i < count; i++) {
-	
+
 		char c = buf[i];
-		
+
 		if ((c >= '0') && (c <= '9')) {
 			pair[j] *= 10;
 			pair[j] += (c - '0');
@@ -668,6 +670,27 @@ static ssize_t store_vdd_levels(struct kobject *a, struct attribute *b, const ch
 	return count;
 }
 
+#endif	/* CONFIG_CPU_VOLTAGE_TABLE */
+
+#ifdef CONFIG_GPU_VOLTAGE_TABLE
+extern ssize_t get_gpu_vdd_levels_str(char *buf);
+extern void set_gpu_vdd_levels(int uv_tbl[]);
+
+static ssize_t show_gpu_vdd_levels(struct kobject *a, struct attribute *b, char *buf)
+{
+	return get_gpu_vdd_levels_str(buf);
+}
+
+static ssize_t store_gpu_vdd_levels(struct kobject *a, struct attribute *b, const char *buf, size_t count)
+{
+	unsigned int ret = -EINVAL;
+	unsigned int u[3];
+	ret = sscanf(buf, "%d %d %d", &u[0], &u[1], &u[2]);
+	set_gpu_vdd_levels(u);
+	return count;
+}
+#endif /* CONFIG_GPU_VOLTAGE_TABLE */
+
 cpufreq_freq_attr_ro_perm(cpuinfo_cur_freq, 0400);
 cpufreq_freq_attr_ro(cpuinfo_min_freq);
 cpufreq_freq_attr_ro(cpuinfo_max_freq);
@@ -683,7 +706,14 @@ cpufreq_freq_attr_rw(scaling_min_freq);
 cpufreq_freq_attr_rw(scaling_max_freq);
 cpufreq_freq_attr_rw(scaling_governor);
 cpufreq_freq_attr_rw(scaling_setspeed);
+
+#ifdef CONFIG_CPU_VOLTAGE_TABLE
 define_one_global_rw(vdd_levels);
+#endif
+
+#ifdef CONFIG_GPU_VOLTAGE_TABLE
+define_one_global_rw(gpu_vdd_levels);
+#endif
 
 static struct attribute *default_attrs[] = {
 	&cpuinfo_min_freq.attr,
@@ -701,15 +731,22 @@ static struct attribute *default_attrs[] = {
 	NULL
 };
 
-static struct attribute *vddtbl_attrs[] = {
+#if defined(CONFIG_CPU_VOLTAGE_TABLE) || defined(CONFIG_GPU_VOLTAGE_TABLE)
+static struct attribute *voltage_attrs[] = {
+#ifdef CONFIG_CPU_VOLTAGE_TABLE
 	&vdd_levels.attr,
+#endif
+#ifdef CONFIG_GPU_VOLTAGE_TABLE
+	&gpu_vdd_levels.attr,
+#endif
 	NULL
 };
 
-static struct attribute_group vddtbl_attr_group = {
-	.attrs = vddtbl_attrs,
+static struct attribute_group voltage_attr_group = {
+	.attrs = voltage_attrs,
 	.name = "vdd_table",
 };
+#endif	/* CONFIG_CPU_VOLTAGE_TABLE/CONFIG_GPU_VOLTAGE_TABLE */
 
 struct kobject *cpufreq_global_kobject;
 EXPORT_SYMBOL(cpufreq_global_kobject);
@@ -2050,7 +2087,10 @@ static int __init cpufreq_core_init(void)
 						&cpu_sysdev_class.kset.kobj);
 	BUG_ON(!cpufreq_global_kobject);
 	register_syscore_ops(&cpufreq_syscore_ops);
-	rc = sysfs_create_group(cpufreq_global_kobject, &vddtbl_attr_group);
+
+#if defined(CONFIG_CPU_VOLTAGE_TABLE) || defined(CONFIG_GPU_VOLTAGE_TABLE)
+	rc = sysfs_create_group(cpufreq_global_kobject, &voltage_attr_group);
+#endif	/* CONFIG_CPU_VOLTAGE_TABLE/CONFIG_GPU_VOLTAGE_TABLE */
 
 	return 0;
 }
