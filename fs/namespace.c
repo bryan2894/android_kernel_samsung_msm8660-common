@@ -476,6 +476,7 @@ static void __mnt_unmake_readonly(struct vfsmount *mnt)
 
 static void free_vfsmnt(struct vfsmount *mnt)
 {
+	kfree(mnt->data);
 	kfree(mnt->mnt_devname);
 	mnt_free_id(mnt);
 #ifdef CONFIG_SMP
@@ -686,11 +687,22 @@ vfs_kern_mount(struct file_system_type *type, int flags, const char *name, void 
 	if (!mnt)
 		return ERR_PTR(-ENOMEM);
 
+	mnt->data = NULL;
+	if (type->alloc_mnt_data) {
+		mnt->data = type->alloc_mnt_data();
+		if (!mnt->data) {
+			mnt_free_id(mnt);
+			free_vfsmnt(mnt);
+			return ERR_PTR(-ENOMEM);
+		}
+	}
+
 	if (flags & MS_KERNMOUNT)
 		mnt->mnt_flags = MNT_INTERNAL;
 
 	root = mount_fs(type, flags, name, data);
 	if (IS_ERR(root)) {
+		kfree(mnt->data);
 		free_vfsmnt(mnt);
 		return ERR_CAST(root);
 	}
@@ -713,6 +725,13 @@ static struct vfsmount *clone_mnt(struct vfsmount *old, struct dentry *root,
 	mnt = alloc_vfsmnt(old->mnt_devname);
 	if (!mnt)
 		return ERR_PTR(-ENOMEM);
+
+	if (sb->s_op->clone_mnt_data) {
+		mnt->data = sb->s_op->clone_mnt_data(old->data);
+		if (!mnt->data) {
+			goto out_free;
+		}
+	}
 
 	if (flag & (CL_SLAVE | CL_PRIVATE | CL_SHARED_TO_SLAVE))
 		mnt->mnt_group_id = 0; /* not a peer of original */
@@ -757,6 +776,7 @@ static struct vfsmount *clone_mnt(struct vfsmount *old, struct dentry *root,
 	return mnt;
 
  out_free:
+	kfree(mnt->data);
 	free_vfsmnt(mnt);
 	return ERR_PTR(err);
 }
@@ -1879,8 +1899,12 @@ static int do_remount(struct path *path, int flags, int mnt_flags,
 	down_write(&sb->s_umount);
 	if (flags & MS_BIND)
 		err = change_mount_flags(path->mnt, flags);
-	else
+	else {
 		err = do_remount_sb(sb, flags, data, 0);
+		br_write_lock(&vfsmount_lock);
+		propagate_remount(path->mnt);
+		br_write_unlock(&vfsmount_lock);
+	}
 	if (!err) {
 		br_write_lock(&vfsmount_lock);
 		mnt_flags |= path->mnt->mnt_flags & ~MNT_USER_SETTABLE_MASK;
