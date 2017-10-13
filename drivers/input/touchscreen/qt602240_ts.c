@@ -19,7 +19,10 @@
 #include <linux/interrupt.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>
-#include <linux/earlysuspend.h>
+#ifdef CONFIG_FB
+#include <linux/notifier.h>
+#include <linux/fb.h>
+#endif
 #include <linux/slab.h>
 #include <linux/gpio.h>
 #include <linux/i2c/mxt224_celox.h>
@@ -175,7 +178,9 @@ ERR_RTN_CONTIOIN gErrCondition = ERR_RTN_CONDITION_IDLE;
 struct mxt224_data {
 	struct i2c_client *client;
 	struct input_dev *input_dev;
-	struct early_suspend early_suspend;
+#ifdef CONFIG_FB
+	struct notifier_block fb_notif;
+#endif
 	u8 family_id;
 	u32 finger_mask;
 	int gpio_read_done;
@@ -200,6 +205,11 @@ struct mxt224_data {
 	struct finger_info fingers[MXT224_MAX_MT_FINGERS];
 	struct timer_list autocal_timer;
 };
+
+#ifdef CONFIG_FB
+static int fb_notifier_callback(struct notifier_block *self,
+                                unsigned long event, void *data);
+#endif
 
 static struct mutex lock;
 static bool lock_needs_init = 1;
@@ -2258,15 +2268,18 @@ static int mxt224_internal_resume(struct mxt224_data *data)
 	return ret;
 }
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#define mxt224_suspend	NULL
-#define mxt224_resume	NULL
-
-static void mxt224_early_suspend(struct early_suspend *h)
+#ifdef CONFIG_FB
+static int mxt224_suspend(struct device *dev)
 {
-	struct mxt224_data *data = container_of(h, struct mxt224_data,
-								early_suspend);
+	struct i2c_client *client = to_i2c_client(dev);
+	struct mxt224_data *data = i2c_get_clientdata(client);
+
 	mutex_lock(&lock);
+
+	if (unlikely(!mxt224_enabled)) {
+		dev_info(&client->dev, "%s, already disabled.\n", __func__);
+		goto out;
+	}
 
 	mxt224_enabled = 0;
 	touch_is_pressed = 0;
@@ -2286,16 +2299,25 @@ static void mxt224_early_suspend(struct early_suspend *h)
 	disable_irq(data->client->irq);
 	mxt224_internal_suspend(data);
 
+out:
 	mutex_unlock(&lock);
-	printk(KERN_ERR "[TSP] mxt224_early_suspend \n");
+	printk(KERN_ERR "[TSP] mxt224_suspend \n");
+	return 0;
 }
 
-static void mxt224_late_resume(struct early_suspend *h)
+static int mxt224_resume(struct device *dev)
 {
 	bool ta_status=0;
-	struct mxt224_data *data = container_of(h, struct mxt224_data,
-								early_suspend);
+	struct i2c_client *client = to_i2c_client(dev);
+	struct mxt224_data *data = i2c_get_clientdata(client);
+
 	mutex_lock(&lock);
+
+	if (unlikely(mxt224_enabled)) {
+		dev_info(&client->dev, "%s, already enabled.\n", __func__);
+		goto out;
+	}
+
 	mxt224_internal_resume(data);
 	enable_irq(data->client->irq);
 
@@ -2315,12 +2337,50 @@ static void mxt224_late_resume(struct early_suspend *h)
 	#endif	
 	if(data->read_ta_status) {
 		data->read_ta_status(&ta_status);
-		printk(KERN_ERR "[TSP] ta_status in (mxt224_late_resume) is %d", ta_status);
+		printk(KERN_ERR "[TSP] ta_status in (mxt224_resume) is %d", ta_status);
 		mxt224_ta_probe(ta_status);
 	}
 	calibrate_chip();
+
+out:
 	mutex_unlock(&lock);
-	printk(KERN_ERR "[TSP] mxt224_late_resume \n");
+	printk(KERN_ERR "[TSP] mxt224_resume \n");
+	return 0;
+}
+
+static int fb_notifier_callback(struct notifier_block *self,
+				unsigned long event, void *data)
+{
+	struct fb_event *evdata = data;
+	int *blank;
+	int new_status;
+	struct mxt224_data *mxt_ts_data = container_of(self, struct mxt224_data, fb_notif);
+
+	if (evdata && evdata->data && data && mxt_ts_data->client) {
+		blank = evdata->data;
+		switch (*blank) {
+			case FB_BLANK_UNBLANK:
+			case FB_BLANK_NORMAL:
+			case FB_BLANK_VSYNC_SUSPEND:
+			case FB_BLANK_HSYNC_SUSPEND:
+				new_status = 0;
+				break;
+			default:
+			case FB_BLANK_POWERDOWN:
+				new_status = 1;
+				break;
+		}
+
+		if (event == FB_EVENT_BLANK) {
+			if (!new_status) {
+				mxt224_resume(&mxt_ts_data->client->dev);
+			} else {
+				mxt224_suspend(&mxt_ts_data->client->dev);
+			}
+		}
+	}
+
+	return 0;
 }
 #else
 static int mxt224_suspend(struct device *dev)
@@ -4228,16 +4288,9 @@ if (device_create_file(sec_touchscreen, &dev_attr_mxt_touchtype) < 0)
 	if (device_create_file(qt602240_noise_test, &dev_attr_set_firm_version) < 0)
 		printk(KERN_ERR "Failed to create device file(%s)!\n", dev_attr_set_firm_version.attr.name);
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_JPN_MODEL_SC_03D) ||  defined (CONFIG_TARGET_LOCALE_USA)
-	data->early_suspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB+3;
-#else
-	data->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
-#endif
-
-	data->early_suspend.suspend = mxt224_early_suspend;
-	data->early_suspend.resume = mxt224_late_resume;
-	register_early_suspend(&data->early_suspend);
+#ifdef CONFIG_FB
+	data->fb_notif.notifier_call = fb_notifier_callback;
+	fb_register_client(&data->fb_notif);
 #endif
 
 #ifdef CLEAR_MEDIAN_FILTER_ERROR
@@ -4307,8 +4360,8 @@ static int __devexit mxt224_remove(struct i2c_client *client)
 {
 	struct mxt224_data *data = i2c_get_clientdata(client);
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-	unregister_early_suspend(&data->early_suspend);
+#ifdef CONFIG_FB
+	fb_unregister_client(&data->fb_notif);
 #endif
 	free_irq(client->irq, data);
 	kfree(data->objects);
@@ -4330,10 +4383,15 @@ static struct i2c_device_id mxt224_idtable[] = {
 
 MODULE_DEVICE_TABLE(i2c, mxt224_idtable);
 
+#if (!defined(CONFIG_FB) && !defined(CONFIG_HAS_EARLYSUSPEND))
 static const struct dev_pm_ops mxt224_pm_ops = {
 	.suspend = mxt224_suspend,
 	.resume = mxt224_resume,
 };
+#else
+static const struct dev_pm_ops mxt224_pm_ops = {
+};
+#endif
 
 static struct i2c_driver mxt224_i2c_driver = {
 	.id_table = mxt224_idtable,
