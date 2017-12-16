@@ -31,7 +31,6 @@
 #include <asm/gpio.h>
 #include <linux/miscdevice.h>
 #include <asm/uaccess.h>
-#include <linux/earlysuspend.h>
 #include <asm/io.h>
 #include <linux/enhanced_bln.h>
 #ifdef CONFIG_CPU_FREQ
@@ -46,6 +45,11 @@
 #include <linux/input/sweep2wake.h>
 #include <linux/s2w-switch.h>
 #include <linux/i2c/gp2a.h>
+#endif
+
+#ifdef CONFIG_FB
+#include <linux/notifier.h>
+#include <linux/fb.h>
 #endif
 
 /*
@@ -214,10 +218,17 @@ void sweep2wake_pwrtrigger(void) {
 struct i2c_touchkey_driver {
 	struct i2c_client *client;
 	struct input_dev *input_dev;
-	struct early_suspend early_suspend;
 	struct mutex mutex;
-        atomic_t keypad_enable;
+	atomic_t keypad_enable;
+#ifdef CONFIG_FB
+	struct notifier_block fb_notif;
+#endif
 };
+
+#ifdef CONFIG_FB
+static int fb_notifier_callback(struct notifier_block *self,
+				unsigned long event, void *data);
+#endif
 struct i2c_touchkey_driver *touchkey_driver = NULL;
 struct work_struct touchkey_work;
 struct workqueue_struct *touchkey_wq;
@@ -802,8 +813,8 @@ static void touchkey_auto_calibration(int autocal_on_off)
 }
 #endif
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static void sec_touchkey_early_suspend(struct early_suspend *h)
+#ifdef CONFIG_FB
+static void sec_touchkey_suspend(void)
 {
     int index =0;
 #if defined (CONFIG_USA_MODEL_SGH_I717)
@@ -812,9 +823,14 @@ static void sec_touchkey_early_suspend(struct early_suspend *h)
 #endif
     mutex_lock(&touchkey_driver->mutex);
 
+	if (unlikely(!touchkey_enable)) {
+	    printk(KERN_DEBUG "[TKEY] %s: already disabled.\n", __func__);
+		goto out;
+	}
+
     touchkey_enable = 0;
     set_touchkey_debug('S');
-    printk(KERN_DEBUG "sec_touchkey_early_suspend\n");
+    printk(KERN_DEBUG "sec_touchkey_suspend\n");
 
 #ifdef CONFIG_TOUCH_CYPRESS_SWEEP2WAKE
 	if (s2w_switch || dt2w_switch || dt2s_switch) {
@@ -918,17 +934,18 @@ static void sec_touchkey_early_suspend(struct early_suspend *h)
 || defined (CONFIG_KOR_MODEL_SHV_E110S)
 	press_check = 0;
 #endif
+out:
     mutex_unlock(&touchkey_driver->mutex);
 }
 
-static void sec_touchkey_early_resume(struct early_suspend *h)
+static void sec_touchkey_resume(void)
 {
 #if defined (CONFIG_EUR_MODEL_GT_I9210) || defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined (CONFIG_USA_MODEL_SGH_T769) || defined (CONFIG_USA_MODEL_SGH_T989)
  	int ret =0;
 #endif
 
 	set_touchkey_debug('R');
-	printk(KERN_DEBUG "[TKEY] sec_touchkey_early_resume\n");
+	printk(KERN_DEBUG "[TKEY] sec_touchkey_resume\n");
 	if (touchkey_enable < 0) {
 		printk("[TKEY] %s touchkey_enable: %d\n", __FUNCTION__, touchkey_enable);
 		return;
@@ -1111,7 +1128,41 @@ if(touchled_cmd_reversed) {
 
         mutex_unlock(&touchkey_driver->mutex);
 }
-#endif				// End of CONFIG_HAS_EARLYSUSPEND
+
+static int fb_notifier_callback(struct notifier_block *self,
+				unsigned long event, void *data)
+{
+	struct fb_event *evdata = data;
+	int *blank;
+	int new_status;
+
+	if (evdata && evdata->data && data && touchkey_driver) {
+		blank = evdata->data;
+		switch (*blank) {
+			case FB_BLANK_UNBLANK:
+			case FB_BLANK_NORMAL:
+			case FB_BLANK_VSYNC_SUSPEND:
+			case FB_BLANK_HSYNC_SUSPEND:
+				new_status = 0;
+				break;
+			default:
+			case FB_BLANK_POWERDOWN:
+				new_status = 1;
+				break;
+		}
+
+		if (event == FB_EVENT_BLANK) {
+			if (!new_status) {
+				sec_touchkey_resume();
+			} else {
+				sec_touchkey_suspend();
+			}
+		}
+	}
+
+	return 0;
+}
+#endif				// End of CONFIG_FB
 
 #if defined(CONFIG_ENHANCED_BLN)
 static unsigned int req_state;
@@ -1258,7 +1309,7 @@ static int i2c_touchkey_probe(struct i2c_client *client, const struct i2c_device
 	set_bit(LED_MISC, input_dev->ledbit);
 	set_bit(EV_KEY, input_dev->evbit);
 
-        atomic_set(&touchkey_driver->keypad_enable, 1);
+	atomic_set(&touchkey_driver->keypad_enable, 1);
 
 	set_bit(touchkey_keycode[1], input_dev->keybit);
 	set_bit(touchkey_keycode[2], input_dev->keybit);
@@ -1276,18 +1327,16 @@ static int i2c_touchkey_probe(struct i2c_client *client, const struct i2c_device
 		return err;
 	}
 
-        // initialize the mutex and lock to allow initialization to finish uninterrupted
+	// initialize the mutex and lock to allow initialization to finish uninterrupted
 	mutex_init(&touchkey_driver->mutex);
 	mutex_lock(&touchkey_driver->mutex);
 
     //	gpio_pend_mask_mem = ioremap(INT_PEND_BASE, 0x10);  //temp ks
     INIT_DELAYED_WORK(&touch_resume_work, touchkey_resume_func);
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-    touchkey_driver->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN - 10;
-    touchkey_driver->early_suspend.suspend = sec_touchkey_early_suspend;
-    touchkey_driver->early_suspend.resume = sec_touchkey_early_resume;
-    register_early_suspend(&touchkey_driver->early_suspend);
+#ifdef CONFIG_FB
+	touchkey_driver->fb_notif.notifier_call = fb_notifier_callback;
+	fb_register_client(&touchkey_driver->fb_notif);
 #endif
 
 	touchkey_enable = 1;
@@ -2910,6 +2959,9 @@ printk("%s : update SHV_E120L_WXGA tkey...\n",__func__);
 static void __exit touchkey_exit(void)
 {
 	printk("[TKEY] %s \n", __FUNCTION__);
+#ifdef CONFIG_FB
+	fb_unregister_client(&touchkey_driver->fb_notif);
+#endif
 	i2c_del_driver(&touchkey_i2c_driver);
 	misc_deregister(&touchkey_update_device);
 	if (touchkey_wq)
