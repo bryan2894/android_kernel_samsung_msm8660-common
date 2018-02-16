@@ -635,6 +635,8 @@ static int sec_bat_read_adc(struct sec_bat_info *info, int channel,
 static int batt_level = 100;
 static int batt_voltage = 4000000;
 
+int poweroff_charging;
+
 int sec_get_batt_level(void)
 {
 	return batt_level;
@@ -4187,7 +4189,8 @@ static __devinit int sec_bat_probe(struct platform_device *pdev)
 	info->charging_start_time = 0;
 
 	if (info->get_lpcharging_state) {
-		if (info->get_lpcharging_state()) {
+		poweroff_charging = info->get_lpcharging_state();
+		if (poweroff_charging) {
 			info->polling_interval = POLLING_INTERVAL / 4;
 			info->lpm_chg_mode = true;
 		} else {
