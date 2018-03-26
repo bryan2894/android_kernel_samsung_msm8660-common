@@ -250,11 +250,11 @@ static int f2fs_set_acl(struct inode *inode, int type,
 	return error;
 }
 
-int f2fs_check_acl(struct inode *inode, int mask, unsigned int flags)
+int f2fs_check_acl(struct inode *inode, int mask)
 {
 	struct posix_acl *acl;
 
-	if (flags & IPERM_FLAG_RCU) {
+	if (mask & MAY_NOT_BLOCK) {
 		if (!negative_cached_acl(inode, ACL_TYPE_ACCESS))
 			return -ECHILD;
 		return -EAGAIN;
