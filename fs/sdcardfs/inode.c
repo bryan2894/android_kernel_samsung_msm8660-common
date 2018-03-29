@@ -711,6 +711,7 @@ static int sdcardfs_permission(struct vfsmount *mnt, struct inode *inode, int ma
 	tmp.i_sb = inode->i_sb;
 	if (IS_POSIXACL(inode))
 		pr_warn("%s: This may be undefined behavior...\n", __func__);
+	tmp.i_op = inode->i_op;
 	err = generic_permission(&tmp, mask, tmp.i_op->check_acl);
 	/* XXX
 	 * Original sdcardfs code calls inode_permission(lower_inode,.. )
